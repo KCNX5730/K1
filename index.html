@@ -13,7 +13,6 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* ───────────── 16:9 STAGE ───────────── */
         #os-container {
             position: relative;
             width: min(100vw, calc(100vh * 16 / 9));
@@ -40,7 +39,6 @@
         }
         .screen.active { display: flex; }
 
-        /* ───────────── BOOT MANAGER ───────────── */
         #bootManager {
             justify-content: flex-start;
             padding: 4cqh 4cqw; background: #000;
@@ -79,7 +77,6 @@
         }
         #bootManager .cancel-msg.show { opacity: 1; }
 
-        /* ───────────── BOOTING ───────────── */
         #bootingScreen { justify-content: center; align-items: center; background: #000; gap: 3cqh; }
         #bootingScreen .loader-wrap { display: flex; flex-direction: column; align-items: center; gap: 2.4cqh; }
         #bootingScreen .spinner {
@@ -110,11 +107,9 @@
         }
         #bootingScreen .dl-status.show { opacity: 1; }
 
-        /* ───────────── WELCOME ───────────── */
         #welcomeScreen { background: #000; justify-content: center; align-items: center; }
         #welcomeScreen video { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; background: #000; }
 
-        /* ───────────── LOCK SCREEN ───────────── */
         #lockScreen {
             --panel-w: clamp(200px, 22cqw, 340px);
             z-index: 2; background: transparent;
@@ -157,7 +152,6 @@
         .lock-weather .temp { font-weight: 600; font-size: clamp(1.1rem, 2.1cqw, 2.3rem); }
         .lock-weather .condition { font-size: clamp(0.75rem, 1.2cqw, 1.3rem); opacity: 0.85; }
 
-        /* up-arrow */
         .bottom-up-arrow {
             position: absolute; bottom: 2.4cqh; left: 50%;
             transform: translateX(-50%);
@@ -177,7 +171,6 @@
             50%      { transform: translateX(-50%) translateY(-4px); }
         }
 
-        /* panel toggle */
         .panel-toggle {
             position: absolute; top: 50%; left: 0;
             transform: translateY(-50%);
@@ -200,7 +193,6 @@
         .panel-toggle.open { left: var(--panel-w); }
         .panel-toggle.open img { transform: rotate(180deg); }
 
-        /* wallpaper panel */
         .wallpaper-panel {
             position: absolute; top: 0; left: 0;
             height: 100%; width: var(--panel-w);
@@ -258,7 +250,6 @@
             z-index: 13; touch-action: none; pointer-events: auto;
         }
 
-        /* ───────────── HOME / APP DRAWER ───────────── */
         .home-screen {
             position: absolute; inset: 0; z-index: 3;
             background: rgba(0, 0, 0, 0.32);
@@ -271,7 +262,6 @@
         }
         .home-screen.open { transform: translateY(0); }
 
-        /* Clickable drag handle (close button) */
         .drag-handle {
             position: absolute; top: 1.2cqh; left: 50%;
             transform: translateX(-50%);
@@ -295,9 +285,7 @@
             background: rgba(255, 255, 255, 0.95);
             transform: scaleY(1.4);
         }
-        .drag-handle:active::before {
-            background: #8af;
-        }
+        .drag-handle:active::before { background: #8af; }
 
         .apps-grid {
             display: flex; flex-wrap: wrap;
@@ -341,7 +329,6 @@
             overflow: hidden; text-overflow: ellipsis; max-width: 100%;
         }
 
-        /* ───────────── APP WINDOWS ───────────── */
         .app-window {
             position: absolute;
             top: 4%; left: 4%;
@@ -371,6 +358,7 @@
             display: flex; align-items: center; gap: 0.6cqw;
         }
         .window-title img { width: 1.3em; height: 1.3em; object-fit: contain; }
+        .window-actions { display: flex; align-items: center; gap: 0.5cqw; }
         .window-close {
             background: transparent; border: none; color: #fff;
             width: clamp(20px, 1.8cqw, 30px); height: clamp(20px, 1.8cqw, 30px);
@@ -380,6 +368,20 @@
             transition: background 0.15s; -webkit-tap-highlight-color: transparent;
         }
         .window-close:hover { background: #ff3b30; }
+
+        .esc-hint {
+            display: inline-flex; align-items: center; gap: 0.3cqw;
+            font-size: clamp(8px, 0.75cqw, 12px);
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 0.06em;
+            padding: 0 0.5cqw;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.25);
+            height: 1.6em;
+        }
+        .esc-hint .kbd { color: #8af; font-weight: 700; }
+
         .window-body {
             flex: 1; overflow: auto;
             display: flex; flex-direction: column;
@@ -415,9 +417,7 @@
             box-shadow: 0 10px 30px rgba(229, 9, 20, 0.35);
             overflow: hidden;
         }
-        .kcnx-player-art img {
-            width: 100%; height: 100%; object-fit: cover;
-        }
+        .kcnx-player-art img { width: 100%; height: 100%; object-fit: cover; }
         .kcnx-player-info { flex: 1; min-width: 0; }
         .kcnx-player-title {
             font-size: clamp(13px, 1.35cqw, 20px);
@@ -456,9 +456,7 @@
             font-size: clamp(22px, 2.2cqw, 34px);
             box-shadow: 0 8px 26px rgba(229, 9, 20, 0.45);
         }
-        .kcnx-player-btn.big:hover {
-            background: linear-gradient(135deg, #ff8555, #ff1e28);
-        }
+        .kcnx-player-btn.big:hover { background: linear-gradient(135deg, #ff8555, #ff1e28); }
         .kcnx-player-progress {
             display: flex; align-items: center; gap: 1cqw;
             flex-shrink: 0;
@@ -476,13 +474,6 @@
             -webkit-appearance: none; appearance: none;
             width: 14px; height: 14px; border-radius: 50%;
             background: #ff6b35;
-            box-shadow: 0 0 10px rgba(255, 107, 53, 0.7);
-            cursor: pointer;
-        }
-        .kcnx-player-progress input[type="range"]::-moz-range-thumb {
-            width: 14px; height: 14px; border-radius: 50%;
-            background: #ff6b35;
-            border: none;
             box-shadow: 0 0 10px rgba(255, 107, 53, 0.7);
             cursor: pointer;
         }
@@ -557,13 +548,9 @@
             transition: transform 0.1s, box-shadow 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
-        .kcnx-exit-btn:hover {
-            box-shadow: 0 8px 30px rgba(255, 59, 48, 0.65);
-        }
+        .kcnx-exit-btn:hover { box-shadow: 0 8px 30px rgba(255, 59, 48, 0.65); }
         .kcnx-exit-btn:active { transform: scale(0.96); }
-        .kcnx-exit-btn .power-icon {
-            font-size: 1.15em; line-height: 1;
-        }
+        .kcnx-exit-btn .power-icon { font-size: 1.15em; line-height: 1; }
 
         /* ───────────── CALCULATOR ───────────── */
         .calc-wrap {
@@ -734,7 +721,7 @@
         /* ───────────── FILE MANAGER ───────────── */
         .files-wrap { display: flex; height: 100%; background: #1c1c1e; }
         .files-sidebar {
-            width: clamp(110px, 13cqw, 200px);
+            width: clamp(120px, 14cqw, 220px);
             background: #151517;
             border-right: 1px solid rgba(255, 255, 255, 0.08);
             padding: 1.4cqh 0.6cqw;
@@ -751,6 +738,14 @@
         }
         .files-side-item:hover { background: rgba(255, 255, 255, 0.06); }
         .files-side-item.active { background: rgba(138, 170, 255, 0.18); color: #fff; }
+        .files-side-item.dropbox-item {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin-top: 0.6cqh; padding-top: 1.2cqh;
+            color: #8fc8ff;
+        }
+        .files-side-item.dropbox-item.active {
+            background: rgba(0, 97, 255, 0.22); color: #fff;
+        }
 
         .files-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         .files-toolbar {
@@ -824,6 +819,149 @@
             font-size: clamp(11px, 1cqw, 15px);
         }
 
+        /* ───────────── DROPBOX PANEL ───────────── */
+        .dropbox-panel {
+            grid-column: 1 / -1;
+            display: flex; flex-direction: column;
+            gap: 1.8cqh;
+            padding: 2.4cqh 2cqw;
+            max-width: 100%;
+        }
+        .dropbox-header {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 1cqh;
+            padding-bottom: 1.6cqh;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .dropbox-logo {
+            width: clamp(48px, 5cqw, 78px);
+            height: clamp(48px, 5cqw, 78px);
+            border-radius: 18px;
+            background: linear-gradient(135deg, #0061FF, #0089FF);
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(24px, 2.6cqw, 42px);
+            box-shadow: 0 8px 26px rgba(0, 97, 255, 0.45);
+        }
+        .dropbox-title {
+            font-size: clamp(14px, 1.4cqw, 20px);
+            font-weight: 700; color: #fff;
+        }
+        .dropbox-sub {
+            font-size: clamp(10px, 0.9cqw, 14px);
+            color: rgba(255, 255, 255, 0.55);
+            text-align: center;
+        }
+        .dropbox-key-row {
+            display: flex; gap: 0.8cqw;
+            align-items: center;
+        }
+        .dropbox-key-row input {
+            flex: 1;
+            background: #0e0e12; color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 8px;
+            padding: 1cqh 1.1cqw;
+            font-family: inherit; font-size: clamp(10px, 0.9cqw, 14px);
+            outline: none;
+        }
+        .dropbox-key-row input:focus { border-color: #0061FF; }
+        .dropbox-key-row button {
+            background: #0061FF; color: #fff;
+            border: none; border-radius: 8px;
+            padding: 1cqh 1.4cqw;
+            font-family: inherit; font-weight: 700;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .dropbox-key-row button:hover { background: #1c78ff; }
+        .dropbox-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 20cqw, 280px), 1fr));
+            gap: 1.2cqw;
+        }
+        .dropbox-action {
+            display: flex; flex-direction: column;
+            align-items: flex-start; gap: 0.6cqh;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 12px;
+            padding: 1.6cqh 1.4cqw;
+            cursor: pointer; text-align: left;
+            color: #fff;
+            transition: background 0.15s, transform 0.15s, border-color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            font-family: inherit;
+        }
+        .dropbox-action:hover {
+            background: rgba(0, 97, 255, 0.12);
+            border-color: rgba(0, 97, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        .dropbox-action-icon {
+            font-size: clamp(18px, 1.8cqw, 28px);
+            color: #8fc8ff;
+        }
+        .dropbox-action-label {
+            font-size: clamp(11px, 1cqw, 15px);
+            font-weight: 700;
+        }
+        .dropbox-action-hint {
+            font-size: clamp(9px, 0.8cqw, 12px);
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .dropbox-status {
+            min-height: 2.4cqh;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0.4cqh 0.2cqw;
+            letter-spacing: 0.03em;
+        }
+        .dropbox-status.error { color: #ff7676; }
+        .dropbox-status.ok { color: #6dffa3; }
+        .dropbox-help {
+            font-size: clamp(9px, 0.82cqw, 12px);
+            color: rgba(255, 255, 255, 0.45);
+            line-height: 1.7;
+            padding: 1.2cqh 1.4cqw;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 2px solid #0061FF;
+            border-radius: 6px;
+        }
+        .dropbox-help a {
+            color: #8fc8ff;
+            text-decoration: underline;
+        }
+        .dropbox-file-list {
+            display: flex; flex-direction: column;
+            gap: 0.4cqh;
+            max-height: 30cqh;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 1cqh;
+        }
+        .dropbox-file-row {
+            display: flex; align-items: center; gap: 0.8cqw;
+            padding: 0.9cqh 0.9cqw;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            color: #ddd;
+            transition: background 0.15s;
+        }
+        .dropbox-file-row:hover { background: rgba(0, 97, 255, 0.18); color: #fff; }
+        .dropbox-file-row .icon {
+            width: 1.4em; text-align: center;
+            font-size: 1.2em;
+        }
+        .dropbox-file-row .name {
+            flex: 1; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .dropbox-file-row .size { color: #888; font-size: 0.9em; }
+
         .file-preview {
             position: absolute; inset: 0;
             background: rgba(0, 0, 0, 0.9);
@@ -860,7 +998,6 @@
         <div class="wallpaper-layer" id="wallpaperLayerA"></div>
         <div class="wallpaper-layer" id="wallpaperLayerB"></div>
 
-        <!-- BOOT MANAGER -->
         <div id="bootManager" class="screen active">
             <div class="top-label">kcnx/bootmanager/command_prompt/user:</div>
             <div class="boot-text">
@@ -885,7 +1022,6 @@
             <div id="cancelMsg" class="cancel-msg">✗ Cancel – invalid input</div>
         </div>
 
-        <!-- BOOTING -->
         <div id="bootingScreen" class="screen">
             <div class="loader-wrap">
                 <div class="spinner"></div>
@@ -895,13 +1031,11 @@
             </div>
         </div>
 
-        <!-- WELCOME -->
         <div id="welcomeScreen" class="screen">
             <video id="welcomeVideo" muted playsinline preload="auto"
                 src="https://res.cloudinary.com/ccmt3psw/video/upload/v1783926098/KCNX_WELCOME_INTRO_f4djcq.mp4"></video>
         </div>
 
-        <!-- LOCK SCREEN -->
         <div id="lockScreen" class="screen">
             <div class="overlay" id="lockOverlay"></div>
             <div class="lock-content">
@@ -930,7 +1064,6 @@
             <div id="swipeCatcher"></div>
         </div>
 
-        <!-- HOME / APP DRAWER -->
         <div id="homeScreen" class="home-screen">
             <button id="dragHandle" class="drag-handle" aria-label="Close apps" type="button"></button>
             <div class="apps-grid" id="appsGrid"></div>
@@ -940,7 +1073,10 @@
         <div class="app-window" id="win-kcnxplayer">
             <div class="window-titlebar">
                 <div class="window-title">🎵 KCNX Music Player</div>
-                <button class="window-close" data-close="win-kcnxplayer">✕</button>
+                <div class="window-actions">
+                    <span class="esc-hint"><span class="kbd">E</span> close</span>
+                    <button class="window-close" data-close="win-kcnxplayer">✕</button>
+                </div>
             </div>
             <div class="window-body">
                 <div class="kcnx-player-wrap">
@@ -951,19 +1087,16 @@
                             <div class="kcnx-player-sub" id="kcnxPlayerSub">Add music via File Manager →</div>
                         </div>
                     </div>
-
                     <div class="kcnx-player-controls">
                         <button class="kcnx-player-btn" id="kcnxPlayerPrev" aria-label="Previous">⏮</button>
                         <button class="kcnx-player-btn big" id="kcnxPlayerPlay" aria-label="Play">▶</button>
                         <button class="kcnx-player-btn" id="kcnxPlayerNext" aria-label="Next">⏭</button>
                     </div>
-
                     <div class="kcnx-player-progress">
                         <span id="kcnxPlayerCur">0:00</span>
                         <input type="range" id="kcnxPlayerSeek" min="0" max="1000" value="0" step="1" />
                         <span id="kcnxPlayerDur">0:00</span>
                     </div>
-
                     <div class="kcnx-player-playlist" id="kcnxPlayerPlaylist">
                         <div class="kcnx-player-playlist-header">Playlist</div>
                         <div class="kcnx-player-empty">
@@ -971,7 +1104,6 @@
                             Open <strong>File Manager</strong> and upload audio files.
                         </div>
                     </div>
-
                     <div class="kcnx-player-footer">
                         <button class="kcnx-exit-btn" id="kcnxPlayerExit">
                             <span class="power-icon">⏻</span> Exit Player
@@ -986,7 +1118,10 @@
         <div class="app-window" id="win-calculator">
             <div class="window-titlebar">
                 <div class="window-title">🧮 Calculator</div>
-                <button class="window-close" data-close="win-calculator">✕</button>
+                <div class="window-actions">
+                    <span class="esc-hint"><span class="kbd">E</span> close</span>
+                    <button class="window-close" data-close="win-calculator">✕</button>
+                </div>
             </div>
             <div class="window-body">
                 <div class="calc-wrap">
@@ -1024,7 +1159,10 @@
         <div class="app-window" id="win-notepad">
             <div class="window-titlebar">
                 <div class="window-title">📝 Notepad</div>
-                <button class="window-close" data-close="win-notepad">✕</button>
+                <div class="window-actions">
+                    <span class="esc-hint"><span class="kbd">E</span> close</span>
+                    <button class="window-close" data-close="win-notepad">✕</button>
+                </div>
             </div>
             <div class="window-body">
                 <div class="notepad-wrap">
@@ -1085,7 +1223,10 @@
         <div class="app-window" id="win-browser">
             <div class="window-titlebar">
                 <div class="window-title">🌐 KCNX Browser</div>
-                <button class="window-close" data-close="win-browser">✕</button>
+                <div class="window-actions">
+                    <span class="esc-hint"><span class="kbd">E</span> close</span>
+                    <button class="window-close" data-close="win-browser">✕</button>
+                </div>
             </div>
             <div class="window-body">
                 <div class="browser-wrap">
@@ -1116,7 +1257,10 @@
         <div class="app-window" id="win-files">
             <div class="window-titlebar">
                 <div class="window-title">📁 File Manager</div>
-                <button class="window-close" data-close="win-files">✕</button>
+                <div class="window-actions">
+                    <span class="esc-hint"><span class="kbd">E</span> close</span>
+                    <button class="window-close" data-close="win-files">✕</button>
+                </div>
             </div>
             <div class="window-body">
                 <div class="files-wrap">
@@ -1126,9 +1270,10 @@
                         <div class="files-side-item" data-cat="videos">🎬 Videos</div>
                         <div class="files-side-item" data-cat="music">🎵 Music</div>
                         <div class="files-side-item" data-cat="documents">📄 Documents</div>
+                        <div class="files-side-item dropbox-item" data-cat="dropbox">☁️ Dropbox</div>
                     </aside>
                     <div class="files-main">
-                        <div class="files-toolbar">
+                        <div class="files-toolbar" id="filesToolbar">
                             <button class="files-btn primary" id="filesUpload">⬆ Upload</button>
                             <input type="file" id="filesInput" multiple style="display:none" />
                             <span class="files-count" id="filesCount">0 files</span>
@@ -1178,8 +1323,6 @@
         function svgDataUri(svg) {
             return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
         }
-
-        // Inline SVG helpers (guaranteed to render — no CORS)
         function letterIcon(bg, letter, size, color, extra) {
             return svgDataUri(
                 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">` +
@@ -1199,10 +1342,9 @@
         }
 
         // ═══════════════════════════════════════════
-        //  ICONS — all guaranteed to render
+        //  ICONS
         // ═══════════════════════════════════════════
         const ICONS = {
-            // Simple Icons (confirmed working from screenshot)
             youtube: 'https://cdn.simpleicons.org/youtube/FF0000',
             netflix: 'https://cdn.simpleicons.org/netflix/E50914',
             appletv: 'https://cdn.simpleicons.org/appletv/000000',
@@ -1218,8 +1360,8 @@
             google:  'https://cdn.simpleicons.org/google/4285F4',
             ddg:     'https://cdn.simpleicons.org/duckduckgo/DE5833',
             brave:   'https://cdn.simpleicons.org/brave/FB542B',
+            dropbox: 'https://cdn.simpleicons.org/dropbox/0061FF',
 
-            // Previously broken — now inline SVG (always render)
             bing:    letterIcon('#008373', 'b', 340, '#ffffff'),
             yandex:  letterIcon('#FC3F1D', 'Y', 320, '#ffffff'),
             zee5:    letterIcon('#8230C6', 'Z5', 220, '#ffffff'),
@@ -1233,7 +1375,6 @@
                 `</svg>`
             ),
 
-            // KCNX internal apps (inline)
             kcnxPlayer: iconTile('#ff6b35',
                 `<circle cx="256" cy="256" r="150" fill="none" stroke="#fff" stroke-width="22"/>` +
                 `<path d="M210 176 L360 256 L210 336 Z" fill="#fff"/>`),
@@ -1285,6 +1426,7 @@
             { name: 'Notepad',     icon: ICONS.notepad,  action: 'openNotepad' },
             { name: 'Browser',     icon: ICONS.browser,  action: 'openBrowser' },
             { name: 'Files',       icon: ICONS.files,    action: 'openFiles' },
+            { name: 'Dropbox',     icon: ICONS.dropbox,  action: 'openFilesDropbox' },
             { name: 'Google',      icon: ICONS.google,   url: 'https://google.com' },
             { name: 'Bing',        icon: ICONS.bing,     url: 'https://bing.com' },
             { name: 'DuckDuckGo',  icon: ICONS.ddg,      url: 'https://duckduckgo.com' },
@@ -1354,6 +1496,7 @@
         const WALLPAPER_KEY = 'kcnx_wallpaper_index';
         const FILES_KEY = 'kcnx_files_v1';
         const NOTES_KEY = 'kcnx_notepad_content';
+        const DROPBOX_KEY = 'kcnx_dropbox_appkey';
 
         let isBooted = localStorage.getItem(STORAGE_KEY) === 'true';
         let currentScreen = 'bootManager';
@@ -1365,6 +1508,7 @@
         let panelOpen = false;
         let homeOpen = false;
         let activeWallpaperLayer = 'A';
+        let userExitedFullscreen = false;
 
         let currentWallpaperIndex = (function() {
             const saved = localStorage.getItem(WALLPAPER_KEY);
@@ -1405,9 +1549,6 @@
         });
         setTimeout(() => bootInput.focus(), 300);
 
-        // ═══════════════════════════════════════════
-        //  BOOTING
-        // ═══════════════════════════════════════════
         function preloadWallpapers(onProgress, onComplete) {
             let loaded = 0;
             const total = WALLPAPERS.length;
@@ -1468,9 +1609,6 @@
             }, 15000);
         }
 
-        // ═══════════════════════════════════════════
-        //  WELCOME
-        // ═══════════════════════════════════════════
         function showWelcome() {
             const alreadySeen = localStorage.getItem(WELCOME_KEY) === 'true';
             if (alreadySeen || !welcomeVideo) { goToLock(); return; }
@@ -1510,9 +1648,6 @@
             lockOverlayTimer = setTimeout(() => lockOverlay.classList.add('visible'), 2000);
         }
 
-        // ═══════════════════════════════════════════
-        //  CLOCK
-        // ═══════════════════════════════════════════
         function startClock() {
             if (clockInterval) clearInterval(clockInterval);
             updateClockAndWeather();
@@ -1529,9 +1664,6 @@
             weatherCond.textContent = 'Sunny';
         }
 
-        // ═══════════════════════════════════════════
-        //  WALLPAPER
-        // ═══════════════════════════════════════════
         function buildWallpaperSlots() {
             wallpaperSlots.innerHTML = '';
             WALLPAPERS.forEach((url, i) => {
@@ -1577,9 +1709,6 @@
             updateActiveSlot();
         }
 
-        // ═══════════════════════════════════════════
-        //  PANEL
-        // ═══════════════════════════════════════════
         function openPanel() { if (panelOpen) return; panelOpen = true; wallpaperPanel.classList.add('open'); panelToggle.classList.add('open'); }
         function closePanel() { if (!panelOpen) return; panelOpen = false; wallpaperPanel.classList.remove('open'); panelToggle.classList.remove('open'); }
         panelToggle.addEventListener('click', (e) => {
@@ -1587,14 +1716,10 @@
             panelOpen ? closePanel() : openPanel();
         });
 
-        // ═══════════════════════════════════════════
-        //  HOME / APP DRAWER
-        // ═══════════════════════════════════════════
         function openHome() { if (homeOpen) return; closePanel(); homeOpen = true; homeScreen.classList.add('open'); }
         function closeHome() { if (!homeOpen) return; homeOpen = false; homeScreen.classList.remove('open'); }
 
         upArrow.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openHome(); });
-        // Drag handle closes the drawer
         dragHandle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeHome(); });
 
         function buildAppsGrid() {
@@ -1618,9 +1743,6 @@
             });
         }
 
-        // ═══════════════════════════════════════════
-        //  SWIPE (lock screen)
-        // ═══════════════════════════════════════════
         let swipeStartX = 0, swipeStartY = 0, swipeActive = false;
         let mouseDown = false, mouseStartX = 0, mouseStartY = 0;
         let swipeInited = false;
@@ -1662,26 +1784,18 @@
             swipeCatcher.addEventListener('mouseup', () => { mouseDown = false; });
         }
 
-        // ═══════════════════════════════════════════
-        //  HOME SWIPE DOWN
-        // ═══════════════════════════════════════════
         let homeSwipeInited = false;
         function initHomeSwipe() {
             if (homeSwipeInited) return;
             homeSwipeInited = true;
-
             let hsY = 0, hActive = false;
             let hmDown = false, hmStartY = 0;
-
-            homeScreen.addEventListener('touchstart', (e) => {
-                hsY = e.touches[0].clientY; hActive = true;
-            }, { passive: true });
+            homeScreen.addEventListener('touchstart', (e) => { hsY = e.touches[0].clientY; hActive = true; }, { passive: true });
             homeScreen.addEventListener('touchmove', (e) => {
                 if (!hActive) return;
                 if (e.touches[0].clientY - hsY > 60) { hActive = false; closeHome(); }
             }, { passive: true });
             homeScreen.addEventListener('touchend', () => { hActive = false; }, { passive: true });
-
             homeScreen.addEventListener('mousedown', (e) => {
                 if (e.target === dragHandle || dragHandle.contains(e.target)) return;
                 hmDown = true; hmStartY = e.clientY;
@@ -1693,9 +1807,6 @@
             homeScreen.addEventListener('mouseup', () => { hmDown = false; });
         }
 
-        // ═══════════════════════════════════════════
-        //  WINDOW MANAGER
-        // ═══════════════════════════════════════════
         function openWindow(id) {
             closeAllWindows();
             const w = document.getElementById(id);
@@ -1711,6 +1822,10 @@
                 if (w.id === 'win-kcnxplayer' && w.classList.contains('open')) KcnxPlayer.stop();
                 w.classList.remove('open');
             });
+        }
+        function getTopmostWindow() {
+            const open = $$('.app-window.open');
+            return open.length ? open[0].id : null;
         }
         $$('.window-close').forEach(btn => {
             btn.addEventListener('click', () => closeWindow(btn.dataset.close));
@@ -1730,7 +1845,6 @@
                 if (this.inited) return;
                 this.inited = true;
                 this.audio = $('kcnxAudio');
-
                 $('kcnxPlayerPlay').addEventListener('click', () => this.togglePlay());
                 $('kcnxPlayerPrev').addEventListener('click', () => this.prev());
                 $('kcnxPlayerNext').addEventListener('click', () => this.next());
@@ -1739,10 +1853,8 @@
                 const seek = $('kcnxPlayerSeek');
                 seek.addEventListener('input', () => {
                     if (!this.audio.duration) return;
-                    const t = (seek.value / 1000) * this.audio.duration;
-                    this.audio.currentTime = t;
+                    this.audio.currentTime = (seek.value / 1000) * this.audio.duration;
                 });
-
                 this.audio.addEventListener('timeupdate', () => this.updateProgress());
                 this.audio.addEventListener('loadedmetadata', () => this.updateProgress());
                 this.audio.addEventListener('ended', () => this.next());
@@ -1805,7 +1917,6 @@
                 this.audio.play().catch(() => {});
                 $('kcnxPlayerTitle').textContent = f.name;
                 $('kcnxPlayerSub').textContent = fmtBytes(f.size) + ' · Local file';
-                // Try to detect metadata
                 $('kcnxPlayerArt').innerHTML = '🎵';
                 this.renderPlaylist();
             },
@@ -1936,7 +2047,6 @@
                 else if (k === '.' || k === ',') { this.press('.'); e.preventDefault(); }
                 else if (k === 'Enter' || k === '=') { this.press('='); e.preventDefault(); }
                 else if (k === 'Backspace') { this.press('⌫'); e.preventDefault(); }
-                else if (k === 'Escape' || k === 'Delete') { this.press('C'); e.preventDefault(); }
                 else if (k === '%') { this.press('%'); e.preventDefault(); }
             }
         };
@@ -2184,6 +2294,19 @@
             },
             render() {
                 const area = $('filesArea');
+                const toolbar = $('filesToolbar');
+
+                // Dropbox panel replaces the file grid
+                if (this.currentCat === 'dropbox') {
+                    toolbar.style.display = 'none';
+                    area.style.display = 'block';
+                    DropboxManager.renderPanel();
+                    return;
+                }
+
+                toolbar.style.display = '';
+                area.style.display = 'grid';
+
                 const list = this.currentCat === 'all'
                     ? this.files
                     : this.files.filter(f => f.category === this.currentCat);
@@ -2216,7 +2339,6 @@
                 });
             },
             openPreview(f) {
-                // Music files open in KCNX Player instead of the modal
                 if (f.category === 'music') {
                     closeAllWindows();
                     KcnxPlayer.init();
@@ -2259,6 +2381,243 @@
         };
 
         // ═══════════════════════════════════════════
+        //  DROPBOX MANAGER
+        // ═══════════════════════════════════════════
+        const DropboxManager = {
+            appKey: '',
+            sdkLoaded: false,
+            sdkLoading: false,
+            statusEl: null,
+
+            init() {
+                try { this.appKey = localStorage.getItem(DROPBOX_KEY) || ''; } catch (e) { this.appKey = ''; }
+            },
+
+            setStatus(msg, cls) {
+                if (!this.statusEl) return;
+                this.statusEl.textContent = msg || '';
+                this.statusEl.className = 'dropbox-status' + (cls ? ' ' + cls : '');
+            },
+
+            loadSDK() {
+                return new Promise((resolve, reject) => {
+                    if (window.Dropbox) { this.sdkLoaded = true; return resolve(); }
+                    if (this.sdkLoading) {
+                        // Wait for existing load
+                        const wait = setInterval(() => {
+                            if (window.Dropbox) { clearInterval(wait); resolve(); }
+                        }, 100);
+                        setTimeout(() => { clearInterval(wait); reject(new Error('SDK load timeout')); }, 8000);
+                        return;
+                    }
+                    if (!this.appKey) { reject(new Error('No Dropbox App Key set')); return; }
+
+                    this.sdkLoading = true;
+                    // Remove old SDK if key changed
+                    const old = document.getElementById('dropboxjs');
+                    if (old) old.remove();
+
+                    const s = document.createElement('script');
+                    s.id = 'dropboxjs';
+                    s.type = 'text/javascript';
+                    s.src = 'https://www.dropbox.com/static/api/2/dropins.js';
+                    s.setAttribute('data-app-key', this.appKey);
+                    s.onload = () => {
+                        this.sdkLoaded = true;
+                        this.sdkLoading = false;
+                        resolve();
+                    };
+                    s.onerror = () => {
+                        this.sdkLoading = false;
+                        reject(new Error('Failed to load Dropbox SDK'));
+                    };
+                    document.head.appendChild(s);
+                });
+            },
+
+            renderPanel() {
+                const area = $('filesArea');
+                area.innerHTML = '';
+                const panel = document.createElement('div');
+                panel.className = 'dropbox-panel';
+                panel.innerHTML =
+                    '<div class="dropbox-header">' +
+                        '<div class="dropbox-logo">☁️</div>' +
+                        '<div class="dropbox-title">Dropbox Transfer</div>' +
+                        '<div class="dropbox-sub">Move files between KCNX and your Dropbox</div>' +
+                    '</div>' +
+                    '<div class="dropbox-key-row">' +
+                        `<input type="text" id="dropboxKeyInput" placeholder="Dropbox App Key (dropbox.com/developers/apps)" value="${this.appKey ? escapeHtml(this.appKey) : ''}" />` +
+                        '<button id="dropboxKeySave">Save Key</button>' +
+                    '</div>' +
+                    '<div class="dropbox-actions">' +
+                        '<button class="dropbox-action" id="dropboxImport">' +
+                            '<span class="dropbox-action-icon">⬇</span>' +
+                            '<span class="dropbox-action-label">Import from Dropbox</span>' +
+                            '<span class="dropbox-action-hint">Choose files from your Dropbox and add them to KCNX</span>' +
+                        '</button>' +
+                        '<button class="dropbox-action" id="dropboxExport">' +
+                            '<span class="dropbox-action-icon">⬆</span>' +
+                            '<span class="dropbox-action-label">Export to Dropbox</span>' +
+                            '<span class="dropbox-action-hint">Pick a KCNX file and save it to your Dropbox</span>' +
+                        '</button>' +
+                        '<button class="dropbox-action" id="dropboxOpenWeb">' +
+                            '<span class="dropbox-action-icon">🌐</span>' +
+                            '<span class="dropbox-action-label">Open Dropbox Web</span>' +
+                            '<span class="dropbox-action-hint">Open dropbox.com in a new browser tab</span>' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="dropbox-status" id="dropboxStatus"></div>' +
+                    '<div class="dropbox-help">' +
+                        '<strong>Setup:</strong> create a free app at ' +
+                        '<a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener">dropbox.com/developers/apps</a>' +
+                        ' → <em>Scoped access</em> → <em>Full Dropbox</em> → copy the <strong>App Key</strong> and paste above. ' +
+                        'The App Key is stored locally in your browser only.' +
+                    '</div>';
+
+                area.appendChild(panel);
+                this.statusEl = $('dropboxStatus');
+
+                $('dropboxKeySave').addEventListener('click', () => {
+                    const v = $('dropboxKeyInput').value.trim();
+                    this.appKey = v;
+                    try { localStorage.setItem(DROPBOX_KEY, v); } catch (e) {}
+                    this.sdkLoaded = false;
+                    this.sdkLoading = false;
+                    const old = document.getElementById('dropboxjs');
+                    if (old) old.remove();
+                    if (window.Dropbox) { try { delete window.Dropbox; } catch (e) {} }
+                    this.setStatus(v ? '✓ App Key saved. SDK will reload on next action.' : 'App Key cleared.', 'ok');
+                });
+
+                $('dropboxImport').addEventListener('click', () => this.import());
+                $('dropboxExport').addEventListener('click', () => this.export());
+                $('dropboxOpenWeb').addEventListener('click', () => {
+                    window.open('https://www.dropbox.com/home', '_blank', 'noopener');
+                });
+            },
+
+            async import() {
+                if (!this.appKey) {
+                    this.setStatus('✗ Set your Dropbox App Key first.', 'error');
+                    return;
+                }
+                this.setStatus('⏳ Loading Dropbox SDK...');
+                try {
+                    await this.loadSDK();
+                } catch (e) {
+                    this.setStatus('✗ ' + e.message, 'error');
+                    return;
+                }
+                this.setStatus('📂 Choose files from Dropbox...');
+                try {
+                    Dropbox.choose({
+                        success: (files) => {
+                            this.setStatus(`⏳ Importing ${files.length} file(s)...`);
+                            let remaining = files.length;
+                            let added = 0;
+                            files.forEach(f => {
+                                fetch(f.link)
+                                    .then(r => r.blob())
+                                    .then(blob => {
+                                        if (blob.size > 4 * 1024 * 1024) {
+                                            this.setStatus(`⚠ "${f.name}" is over 4 MB — skipped.`, 'error');
+                                            if (--remaining === 0) this.finishImport(added);
+                                            return;
+                                        }
+                                        const reader = new FileReader();
+                                        reader.onload = () => {
+                                            FileManager.files.push({
+                                                id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                                                name: f.name,
+                                                type: f.type || 'application/octet-stream',
+                                                category: FileManager.categorize(f.type || '', f.name),
+                                                size: blob.size,
+                                                date: Date.now(),
+                                                dataUrl: reader.result
+                                            });
+                                            added++;
+                                            if (--remaining === 0) this.finishImport(added);
+                                        };
+                                        reader.onerror = () => { if (--remaining === 0) this.finishImport(added); };
+                                        reader.readAsDataURL(blob);
+                                    })
+                                    .catch(() => { if (--remaining === 0) this.finishImport(added); });
+                            });
+                        },
+                        cancel: () => this.setStatus('Import cancelled.'),
+                        linkType: 'direct',
+                        multiselect: true,
+                        extensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mp3', '.wav', '.ogg', '.pdf', '.txt', '.md', '.doc', '.docx']
+                    });
+                } catch (e) {
+                    this.setStatus('✗ ' + e.message, 'error');
+                }
+            },
+
+            finishImport(added) {
+                FileManager.save();
+                if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
+                this.setStatus(`✓ Imported ${added} file(s) from Dropbox.`, 'ok');
+                // Refresh view to show updated file counts if user switches back
+            },
+
+            async export() {
+                if (!this.appKey) {
+                    this.setStatus('✗ Set your Dropbox App Key first.', 'error');
+                    return;
+                }
+                if (!FileManager.files.length) {
+                    this.setStatus('✗ No KCNX files to export yet.', 'error');
+                    return;
+                }
+                // Show a picker
+                this.setStatus('Select a file to export:');
+                const area = $('filesArea');
+                const existingList = area.querySelector('.dropbox-file-list');
+                if (existingList) existingList.remove();
+                const list = document.createElement('div');
+                list.className = 'dropbox-file-list';
+                FileManager.files.slice().reverse().forEach(f => {
+                    const row = document.createElement('div');
+                    row.className = 'dropbox-file-row';
+                    let icon = '📦';
+                    if (f.category === 'photos') icon = '🖼️';
+                    else if (f.category === 'videos') icon = '🎬';
+                    else if (f.category === 'music') icon = '🎵';
+                    else if (f.category === 'documents') icon = '📄';
+                    row.innerHTML =
+                        `<span class="icon">${icon}</span>` +
+                        `<span class="name">${escapeHtml(f.name)}</span>` +
+                        `<span class="size">${fmtBytes(f.size)}</span>`;
+                    row.addEventListener('click', () => this.doExport(f));
+                    list.appendChild(row);
+                });
+                area.appendChild(list);
+            },
+
+            async doExport(file) {
+                this.setStatus('⏳ Loading Dropbox SDK...');
+                try {
+                    await this.loadSDK();
+                } catch (e) {
+                    this.setStatus('✗ ' + e.message, 'error');
+                    return;
+                }
+                this.setStatus('☁️ Opening Dropbox Saver...');
+                try {
+                    Dropbox.save(file.dataUrl, file.name, {
+                        success: () => this.setStatus(`✓ Saved "${file.name}" to Dropbox.`, 'ok'),
+                        cancel: () => this.setStatus('Export cancelled.'),
+                        progress: () => {}
+                    });
+                } catch (e) {
+                    this.setStatus('✗ ' + e.message, 'error');
+                }
+            }
+        };
+
+        // ═══════════════════════════════════════════
         //  APP ACTIONS
         // ═══════════════════════════════════════════
         const AppActions = {
@@ -2266,13 +2625,73 @@
             openCalc:       () => openWindow('win-calculator'),
             openNotepad:    () => openWindow('win-notepad'),
             openBrowser:    () => openWindow('win-browser'),
-            openFiles:      () => openWindow('win-files'),
+            openFiles:      () => { openWindow('win-files'); FileManager.currentCat = 'all'; FileManager.render(); },
+            openFilesDropbox: () => {
+                openWindow('win-files');
+                FileManager.currentCat = 'dropbox';
+                $$('.files-side-item').forEach(x => x.classList.toggle('active', x.dataset.cat === 'dropbox'));
+                FileManager.render();
+            }
         };
 
         // ═══════════════════════════════════════════
-        //  GLOBAL KEYBOARD
+        //  KEYBOARD — E closes topmost app, Q exits fullscreen
+        //             Esc left to Chrome
         // ═══════════════════════════════════════════
-        document.addEventListener('keydown', (e) => {
+        function closeTopLayer() {
+            const preview = $('filePreview');
+            if (preview && preview.classList.contains('open')) {
+                FileManager.closePreview();
+                return true;
+            }
+            const topWin = getTopmostWindow();
+            if (topWin) {
+                closeWindow(topWin);
+                return true;
+            }
+            if (homeOpen) { closeHome(); return true; }
+            if (panelOpen) { closePanel(); return true; }
+            return false;
+        }
+
+        function exitFullscreenWithQ() {
+            if (document.fullscreenElement) {
+                userExitedFullscreen = true;
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const t = e.target;
+            const isTyping = t && (
+                t.tagName === 'INPUT' ||
+                t.tagName === 'TEXTAREA' ||
+                t.tagName === 'SELECT' ||
+                t.isContentEditable
+            );
+
+            if (!isTyping && !e.ctrlKey && !e.metaKey && !e.altKey &&
+                (e.key === 'q' || e.key === 'Q')) {
+                if (document.fullscreenElement) {
+                    exitFullscreenWithQ();
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return;
+                }
+            }
+
+            if (!isTyping && !e.ctrlKey && !e.metaKey && !e.altKey &&
+                (e.key === 'e' || e.key === 'E')) {
+                const handled = closeTopLayer();
+                if (handled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return;
+                }
+            }
+
             Calculator.handleKey(e);
 
             if ($('win-notepad').classList.contains('open')) {
@@ -2283,30 +2702,27 @@
                 if (ctrl && e.key.toLowerCase() === 'a') { e.preventDefault(); Notepad.action('selectAll'); }
                 if (e.key === 'F5') { e.preventDefault(); Notepad.action('timeDate'); }
             }
+        }, { capture: true });
 
-            if (e.key === 'Escape') {
-                const open = document.querySelector('.app-window.open');
-                if (open) closeWindow(open.id);
-                else if (homeOpen) closeHome();
-            }
-        });
-
-        // ═══════════════════════════════════════════
-        //  FULLSCREEN
-        // ═══════════════════════════════════════════
         function requestFullscreen() {
+            if (document.fullscreenElement) return;
             const el = document.documentElement;
-            if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-            else if (el.msRequestFullscreen) el.msRequestFullscreen();
+            const p = el.requestFullscreen ? el.requestFullscreen() :
+                      el.webkitRequestFullscreen ? el.webkitRequestFullscreen() :
+                      el.msRequestFullscreen ? el.msRequestFullscreen() : null;
+            if (p && typeof p.catch === 'function') p.catch(() => {});
         }
+
+        // No toast on fullscreenchange — silent
+        document.addEventListener('fullscreenchange', () => { /* intentionally silent */ });
+
         ['click', 'touchstart', 'keydown', 'mousedown'].forEach(evt => {
             document.addEventListener(evt, function h() {
-                requestFullscreen();
                 ['click', 'touchstart', 'keydown', 'mousedown'].forEach(x => document.removeEventListener(x, h));
+                if (!userExitedFullscreen) requestFullscreen();
             }, { once: true, passive: true });
         });
-        setTimeout(requestFullscreen, 600);
+        setTimeout(() => { if (!userExitedFullscreen) requestFullscreen(); }, 600);
 
         // ═══════════════════════════════════════════
         //  INIT
@@ -2320,6 +2736,7 @@
             Browser.init();
             FileManager.init();
             KcnxPlayer.init();
+            DropboxManager.init();
 
             const welcomeAlreadySeen = localStorage.getItem(WELCOME_KEY) === 'true';
             if (!welcomeAlreadySeen) {
