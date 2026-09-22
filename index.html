@@ -357,7 +357,6 @@
             color: #ddd; letter-spacing: 0.06em;
             display: flex; align-items: center; gap: 0.6cqw;
         }
-        .window-title img { width: 1.3em; height: 1.3em; object-fit: contain; }
         .window-actions { display: flex; align-items: center; gap: 0.5cqw; }
         .window-close {
             background: transparent; border: none; color: #fff;
@@ -719,9 +718,23 @@
         }
 
         /* ───────────── FILE MANAGER ───────────── */
-        .files-wrap { display: flex; height: 100%; background: #1c1c1e; }
+        .files-wrap { display: flex; height: 100%; background: #1c1c1e; position: relative; }
+        .files-wrap.dragover::after {
+            content: '⬇ Drop files to add to KCNX';
+            position: absolute; inset: 0;
+            background: rgba(138, 170, 255, 0.18);
+            border: 3px dashed #8af;
+            z-index: 50;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(16px, 1.8cqw, 28px);
+            font-weight: 700; color: #fff;
+            pointer-events: none;
+            border-radius: 12px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
         .files-sidebar {
-            width: clamp(120px, 14cqw, 220px);
+            width: clamp(140px, 15cqw, 240px);
             background: #151517;
             border-right: 1px solid rgba(255, 255, 255, 0.08);
             padding: 1.4cqh 0.6cqw;
@@ -738,13 +751,22 @@
         }
         .files-side-item:hover { background: rgba(255, 255, 255, 0.06); }
         .files-side-item.active { background: rgba(138, 170, 255, 0.18); color: #fff; }
-        .files-side-item.dropbox-item {
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            margin-top: 0.6cqh; padding-top: 1.2cqh;
-            color: #8fc8ff;
+
+        .files-side-sep {
+            height: 1px; background: rgba(255, 255, 255, 0.08);
+            margin: 0.9cqh 0.6cqw;
         }
-        .files-side-item.dropbox-item.active {
-            background: rgba(0, 97, 255, 0.22); color: #fff;
+        .files-side-label {
+            font-size: clamp(8px, 0.72cqw, 11px);
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.35);
+            padding: 0.4cqh 0.9cqw 0.6cqh;
+        }
+        .files-side-item.cloud {
+            color: #a8c4ff;
+        }
+        .files-side-item.cloud.active {
+            background: rgba(0, 120, 255, 0.22); color: #fff;
         }
 
         .files-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -753,7 +775,7 @@
             padding: 1cqh 1.2cqw;
             background: #2a2a2e;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            flex-shrink: 0;
+            flex-shrink: 0; flex-wrap: wrap;
         }
         .files-btn {
             background: #3a3a3e; color: #fff;
@@ -767,7 +789,12 @@
         .files-btn:hover { background: #4a4a52; }
         .files-btn.primary { background: #8af; color: #001a33; font-weight: 700; }
         .files-btn.primary:hover { background: #a8c4ff; }
+        .files-btn.mount {
+            background: #4a5a7a; color: #fff;
+        }
+        .files-btn.mount:hover { background: #5a6a8a; }
         .files-count { margin-left: auto; color: #888; font-size: clamp(9px, 0.8cqw, 12px); }
+
         .files-area {
             flex: 1; padding: 1.5cqh 1.2cqw;
             overflow-y: auto;
@@ -817,150 +844,153 @@
             text-align: center; color: #666;
             padding: 6cqh 2cqw;
             font-size: clamp(11px, 1cqw, 15px);
+            line-height: 1.8;
         }
+        .files-empty strong { color: #8af; }
 
-        /* ───────────── DROPBOX PANEL ───────────── */
-        .dropbox-panel {
+        /* ───────────── CLOUD PANEL ───────────── */
+        .cloud-panel {
             grid-column: 1 / -1;
-            display: flex; flex-direction: column;
-            gap: 1.8cqh;
-            padding: 2.4cqh 2cqw;
-            max-width: 100%;
+            padding: 1.6cqh 1.2cqw 3cqh;
+            display: flex; flex-direction: column; gap: 2cqh;
         }
-        .dropbox-header {
+        .cloud-header {
             display: flex; flex-direction: column;
-            align-items: center; gap: 1cqh;
+            align-items: center; gap: 0.8cqh;
             padding-bottom: 1.6cqh;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .dropbox-logo {
-            width: clamp(48px, 5cqw, 78px);
-            height: clamp(48px, 5cqw, 78px);
-            border-radius: 18px;
-            background: linear-gradient(135deg, #0061FF, #0089FF);
-            display: flex; align-items: center; justify-content: center;
-            font-size: clamp(24px, 2.6cqw, 42px);
-            box-shadow: 0 8px 26px rgba(0, 97, 255, 0.45);
+        .cloud-header-icon {
+            font-size: clamp(28px, 3cqw, 48px);
         }
-        .dropbox-title {
+        .cloud-header-title {
             font-size: clamp(14px, 1.4cqw, 20px);
             font-weight: 700; color: #fff;
         }
-        .dropbox-sub {
+        .cloud-header-sub {
             font-size: clamp(10px, 0.9cqw, 14px);
             color: rgba(255, 255, 255, 0.55);
-            text-align: center;
+            text-align: center; line-height: 1.6;
+            max-width: 70cqw;
         }
-        .dropbox-key-row {
-            display: flex; gap: 0.8cqw;
-            align-items: center;
-        }
-        .dropbox-key-row input {
-            flex: 1;
-            background: #0e0e12; color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 8px;
-            padding: 1cqh 1.1cqw;
-            font-family: inherit; font-size: clamp(10px, 0.9cqw, 14px);
-            outline: none;
-        }
-        .dropbox-key-row input:focus { border-color: #0061FF; }
-        .dropbox-key-row button {
-            background: #0061FF; color: #fff;
-            border: none; border-radius: 8px;
-            padding: 1cqh 1.4cqw;
-            font-family: inherit; font-weight: 700;
-            font-size: clamp(10px, 0.9cqw, 14px);
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .dropbox-key-row button:hover { background: #1c78ff; }
-        .dropbox-actions {
+        .cloud-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 20cqw, 280px), 1fr));
-            gap: 1.2cqw;
+            grid-template-columns: repeat(auto-fit, minmax(clamp(220px, 24cqw, 340px), 1fr));
+            gap: 1.4cqw;
         }
-        .dropbox-action {
-            display: flex; flex-direction: column;
-            align-items: flex-start; gap: 0.6cqh;
+        .cloud-card {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 14px;
+            padding: 1.8cqh 1.4cqw;
+            display: flex; flex-direction: column; gap: 1.2cqh;
+        }
+        .cloud-card-header {
+            display: flex; align-items: center; gap: 1cqw;
+        }
+        .cloud-card-icon {
+            width: clamp(38px, 3.8cqw, 58px);
+            height: clamp(38px, 3.8cqw, 58px);
             border-radius: 12px;
-            padding: 1.6cqh 1.4cqw;
-            cursor: pointer; text-align: left;
-            color: #fff;
-            transition: background 0.15s, transform 0.15s, border-color 0.15s;
-            -webkit-tap-highlight-color: transparent;
-            font-family: inherit;
+            background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            padding: 5px;
+            overflow: hidden;
+            flex-shrink: 0;
         }
-        .dropbox-action:hover {
-            background: rgba(0, 97, 255, 0.12);
-            border-color: rgba(0, 97, 255, 0.4);
-            transform: translateY(-2px);
+        .cloud-card-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .cloud-card-info { min-width: 0; }
+        .cloud-card-name {
+            font-size: clamp(12px, 1.1cqw, 16px);
+            font-weight: 700; color: #fff;
         }
-        .dropbox-action-icon {
-            font-size: clamp(18px, 1.8cqw, 28px);
-            color: #8fc8ff;
-        }
-        .dropbox-action-label {
-            font-size: clamp(11px, 1cqw, 15px);
-            font-weight: 700;
-        }
-        .dropbox-action-hint {
+        .cloud-card-sub {
             font-size: clamp(9px, 0.8cqw, 12px);
             color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.2cqh;
         }
-        .dropbox-status {
-            min-height: 2.4cqh;
-            font-size: clamp(10px, 0.9cqw, 14px);
-            color: rgba(255, 255, 255, 0.7);
-            padding: 0.4cqh 0.2cqw;
+        .cloud-card-help {
+            font-size: clamp(9px, 0.82cqw, 12px);
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.6;
+        }
+        .cloud-card-help a {
+            color: #8fc8ff; text-decoration: underline;
+        }
+        .cloud-key-row {
+            display: flex; gap: 0.6cqw; align-items: center;
+        }
+        .cloud-key-row input {
+            flex: 1; min-width: 0;
+            background: #0e0e12; color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 6px;
+            padding: 0.9cqh 1cqw;
+            font-family: inherit; font-size: clamp(10px, 0.85cqw, 13px);
+            outline: none;
+        }
+        .cloud-key-row input:focus { border-color: #8af; }
+        .cloud-key-row button {
+            background: #3a3a3e; color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 0.9cqh 1.1cqw;
+            font-family: inherit; font-weight: 700;
+            font-size: clamp(10px, 0.85cqw, 13px);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .cloud-key-row button:hover { background: #4a4a52; }
+        .cloud-actions {
+            display: flex; gap: 0.6cqw; flex-wrap: wrap;
+        }
+        .cloud-btn {
+            flex: 1; min-width: clamp(100px, 11cqw, 160px);
+            background: #3a3a3e; color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1cqh 1.2cqw;
+            font-family: inherit; font-size: clamp(10px, 0.9cqw, 14px);
+            font-weight: 700;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5cqw;
+            transition: background 0.15s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cloud-btn:hover { background: #4a4a52; }
+        .cloud-btn:active { transform: scale(0.97); }
+        .cloud-btn.primary {
+            background: linear-gradient(135deg, #0061FF, #0089FF);
+            border: none;
+        }
+        .cloud-btn.primary:hover { background: linear-gradient(135deg, #1c78ff, #2a9aff); }
+        .cloud-btn.google.primary {
+            background: linear-gradient(135deg, #4285F4, #34A853);
+        }
+        .cloud-btn.onedrive.primary {
+            background: linear-gradient(135deg, #0078D4, #00B7C3);
+        }
+        .cloud-status {
+            min-height: 1.4em;
+            font-size: clamp(9px, 0.82cqw, 12px);
+            color: rgba(255, 255, 255, 0.65);
             letter-spacing: 0.03em;
         }
-        .dropbox-status.error { color: #ff7676; }
-        .dropbox-status.ok { color: #6dffa3; }
-        .dropbox-help {
-            font-size: clamp(9px, 0.82cqw, 12px);
-            color: rgba(255, 255, 255, 0.45);
-            line-height: 1.7;
-            padding: 1.2cqh 1.4cqw;
-            background: rgba(255, 255, 255, 0.03);
-            border-left: 2px solid #0061FF;
-            border-radius: 6px;
+        .cloud-status.ok { color: #6dffa3; }
+        .cloud-status.err { color: #ff7676; }
+
+        /* Mounted external folder badge */
+        .ext-folder-badge {
+            display: inline-flex; align-items: center; gap: 0.3cqw;
+            margin-left: 0.4cqw;
+            font-size: 0.8em;
+            background: rgba(109, 255, 163, 0.15);
+            color: #6dffa3;
+            border-radius: 4px;
+            padding: 0.1em 0.4em;
+            letter-spacing: 0.05em;
+            font-weight: 700;
         }
-        .dropbox-help a {
-            color: #8fc8ff;
-            text-decoration: underline;
-        }
-        .dropbox-file-list {
-            display: flex; flex-direction: column;
-            gap: 0.4cqh;
-            max-height: 30cqh;
-            overflow-y: auto;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 1cqh;
-        }
-        .dropbox-file-row {
-            display: flex; align-items: center; gap: 0.8cqw;
-            padding: 0.9cqh 0.9cqw;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: clamp(10px, 0.9cqw, 14px);
-            color: #ddd;
-            transition: background 0.15s;
-        }
-        .dropbox-file-row:hover { background: rgba(0, 97, 255, 0.18); color: #fff; }
-        .dropbox-file-row .icon {
-            width: 1.4em; text-align: center;
-            font-size: 1.2em;
-        }
-        .dropbox-file-row .name {
-            flex: 1; white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
-        }
-        .dropbox-file-row .size { color: #888; font-size: 0.9em; }
 
         .file-preview {
             position: absolute; inset: 0;
@@ -1263,19 +1293,23 @@
                 </div>
             </div>
             <div class="window-body">
-                <div class="files-wrap">
+                <div class="files-wrap" id="filesWrap">
                     <aside class="files-sidebar" id="filesSidebar">
                         <div class="files-side-item active" data-cat="all">📂 All Files</div>
                         <div class="files-side-item" data-cat="photos">🖼️ Photos</div>
                         <div class="files-side-item" data-cat="videos">🎬 Videos</div>
                         <div class="files-side-item" data-cat="music">🎵 Music</div>
                         <div class="files-side-item" data-cat="documents">📄 Documents</div>
-                        <div class="files-side-item dropbox-item" data-cat="dropbox">☁️ Dropbox</div>
+                        <div class="files-side-sep"></div>
+                        <div class="files-side-label">Storage</div>
+                        <div class="files-side-item cloud" data-cat="cloud">☁️ Cloud Storage</div>
+                        <div class="files-side-item" id="extFolderItem" style="display:none;">📁 <span id="extFolderName">External</span> <span class="ext-folder-badge">MNT</span></div>
                     </aside>
                     <div class="files-main">
                         <div class="files-toolbar" id="filesToolbar">
                             <button class="files-btn primary" id="filesUpload">⬆ Upload</button>
                             <input type="file" id="filesInput" multiple style="display:none" />
+                            <button class="files-btn mount" id="filesMount">🔌 Mount Folder</button>
                             <span class="files-count" id="filesCount">0 files</span>
                         </div>
                         <div class="files-area" id="filesArea"></div>
@@ -1312,7 +1346,8 @@
         function fmtBytes(b) {
             if (b < 1024) return b + ' B';
             if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
-            return (b / (1024 * 1024)).toFixed(2) + ' MB';
+            if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(2) + ' MB';
+            return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
         }
         function fmtTime(s) {
             if (!isFinite(s) || s < 0) return '0:00';
@@ -1360,7 +1395,9 @@
             google:  'https://cdn.simpleicons.org/google/4285F4',
             ddg:     'https://cdn.simpleicons.org/duckduckgo/DE5833',
             brave:   'https://cdn.simpleicons.org/brave/FB542B',
-            dropbox: 'https://cdn.simpleicons.org/dropbox/0061FF',
+            googledrive: 'https://cdn.simpleicons.org/googledrive/4285F4',
+            onedrive:    'https://cdn.simpleicons.org/microsoftonedrive/0078D4',
+            box:         'https://cdn.simpleicons.org/box/0061D5',
 
             bing:    letterIcon('#008373', 'b', 340, '#ffffff'),
             yandex:  letterIcon('#FC3F1D', 'Y', 320, '#ffffff'),
@@ -1413,7 +1450,9 @@
                 `<line x1="140" y1="326" x2="372" y2="326" stroke="#fff" stroke-width="12"/>`),
             files: iconTile('#f6c945',
                 `<path d="M96 170 a26 26 0 0 1 26 -26 h84 l32 34 h154 a26 26 0 0 1 26 26 v152 a26 26 0 0 1 -26 26 H122 a26 26 0 0 1 -26 -26 Z" fill="#fff" stroke="#b58a00" stroke-width="8"/>` +
-                `<path d="M96 200 H416 V356 a26 26 0 0 1 -26 26 H122 a26 26 0 0 1 -26 -26 Z" fill="#fff"/>`)
+                `<path d="M96 200 H416 V356 a26 26 0 0 1 -26 26 H122 a26 26 0 0 1 -26 -26 Z" fill="#fff"/>`),
+            cloud: iconTile('#0061FF',
+                `<path d="M170 320 a60 60 0 0 1 0 -120 a80 80 0 0 1 155 -18 a55 55 0 0 1 17 108 Z" fill="#fff"/>`)
         };
 
         // ═══════════════════════════════════════════
@@ -1426,7 +1465,7 @@
             { name: 'Notepad',     icon: ICONS.notepad,  action: 'openNotepad' },
             { name: 'Browser',     icon: ICONS.browser,  action: 'openBrowser' },
             { name: 'Files',       icon: ICONS.files,    action: 'openFiles' },
-            { name: 'Dropbox',     icon: ICONS.dropbox,  action: 'openFilesDropbox' },
+            { name: 'Cloud',       icon: ICONS.cloud,    action: 'openCloud' },
             { name: 'Google',      icon: ICONS.google,   url: 'https://google.com' },
             { name: 'Bing',        icon: ICONS.bing,     url: 'https://bing.com' },
             { name: 'DuckDuckGo',  icon: ICONS.ddg,      url: 'https://duckduckgo.com' },
@@ -1494,9 +1533,8 @@
         const STORAGE_KEY = 'kcnx_booted';
         const WELCOME_KEY = 'kcnx_welcome_shown';
         const WALLPAPER_KEY = 'kcnx_wallpaper_index';
-        const FILES_KEY = 'kcnx_files_v1';
         const NOTES_KEY = 'kcnx_notepad_content';
-        const DROPBOX_KEY = 'kcnx_dropbox_appkey';
+        const CLOUD_KEYS_KEY = 'kcnx_cloud_keys_v1';
 
         let isBooted = localStorage.getItem(STORAGE_KEY) === 'true';
         let currentScreen = 'bootManager';
@@ -1530,7 +1568,76 @@
         }
 
         // ═══════════════════════════════════════════
-        //  BOOT MANAGER
+        //  INDEXEDDB WRAPPER
+        // ═══════════════════════════════════════════
+        const KcnxDB = {
+            dbName: 'kcnx_os_v1',
+            storeName: 'files',
+            db: null,
+
+            open() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(this.dbName, 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
+                            store.createIndex('category', 'category', { unique: false });
+                            store.createIndex('date', 'date', { unique: false });
+                        }
+                    };
+                    req.onsuccess = () => { this.db = req.result; resolve(); };
+                    req.onerror = () => reject(req.error);
+                });
+            },
+
+            getAll() {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) return resolve([]);
+                    const tx = this.db.transaction(this.storeName, 'readonly');
+                    const store = tx.objectStore(this.storeName);
+                    const req = store.getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error);
+                });
+            },
+
+            put(file) {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) return reject(new Error('DB not open'));
+                    const tx = this.db.transaction(this.storeName, 'readwrite');
+                    const store = tx.objectStore(this.storeName);
+                    const req = store.put(file);
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => reject(req.error);
+                });
+            },
+
+            delete(id) {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) return reject(new Error('DB not open'));
+                    const tx = this.db.transaction(this.storeName, 'readwrite');
+                    const store = tx.objectStore(this.storeName);
+                    const req = store.delete(id);
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => reject(req.error);
+                });
+            },
+
+            clear() {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) return reject(new Error('DB not open'));
+                    const tx = this.db.transaction(this.storeName, 'readwrite');
+                    const store = tx.objectStore(this.storeName);
+                    const req = store.clear();
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => reject(req.error);
+                });
+            }
+        };
+
+        // ═══════════════════════════════════════════
+        //  BOOT / WELCOME / LOCK (unchanged)
         // ═══════════════════════════════════════════
         bootInput.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
@@ -1718,7 +1825,6 @@
 
         function openHome() { if (homeOpen) return; closePanel(); homeOpen = true; homeScreen.classList.add('open'); }
         function closeHome() { if (!homeOpen) return; homeOpen = false; homeScreen.classList.remove('open'); }
-
         upArrow.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openHome(); });
         dragHandle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeHome(); });
 
@@ -1733,7 +1839,6 @@
                     `<img src="${app.icon}" alt="${escapeHtml(app.name)}" draggable="false" />` +
                     `</div>` +
                     `<span class="app-name">${escapeHtml(app.name)}</span>`;
-
                 tile.addEventListener('click', (e) => {
                     e.preventDefault();
                     if (app.action) AppActions[app.action]();
@@ -1743,6 +1848,9 @@
             });
         }
 
+        // ═══════════════════════════════════════════
+        //  SWIPE
+        // ═══════════════════════════════════════════
         let swipeStartX = 0, swipeStartY = 0, swipeActive = false;
         let mouseDown = false, mouseStartX = 0, mouseStartY = 0;
         let swipeInited = false;
@@ -1766,10 +1874,7 @@
                 }
             }, { passive: true });
             swipeCatcher.addEventListener('touchend', () => { swipeActive = false; }, { passive: true });
-
-            swipeCatcher.addEventListener('mousedown', (e) => {
-                mouseDown = true; mouseStartX = e.clientX; mouseStartY = e.clientY;
-            });
+            swipeCatcher.addEventListener('mousedown', (e) => { mouseDown = true; mouseStartX = e.clientX; mouseStartY = e.clientY; });
             swipeCatcher.addEventListener('mousemove', (e) => {
                 if (!mouseDown) return;
                 const dx = e.clientX - mouseStartX;
@@ -1807,6 +1912,9 @@
             homeScreen.addEventListener('mouseup', () => { hmDown = false; });
         }
 
+        // ═══════════════════════════════════════════
+        //  WINDOW MANAGER
+        // ═══════════════════════════════════════════
         function openWindow(id) {
             closeAllWindows();
             const w = document.getElementById(id);
@@ -1838,8 +1946,8 @@
             audio: null,
             playlist: [],
             currentIndex: -1,
-            isPlaying: false,
             inited: false,
+            currentURL: null,
 
             init() {
                 if (this.inited) return;
@@ -1859,11 +1967,9 @@
                 this.audio.addEventListener('loadedmetadata', () => this.updateProgress());
                 this.audio.addEventListener('ended', () => this.next());
                 this.audio.addEventListener('play', () => {
-                    this.isPlaying = true;
                     $('kcnxPlayerPlay').textContent = '⏸';
                 });
                 this.audio.addEventListener('pause', () => {
-                    this.isPlaying = false;
                     $('kcnxPlayerPlay').textContent = '▶';
                 });
             },
@@ -1913,11 +2019,12 @@
                 if (i < 0 || i >= this.playlist.length) return;
                 const f = this.playlist[i];
                 this.currentIndex = i;
-                this.audio.src = f.dataUrl;
+                if (this.currentURL) URL.revokeObjectURL(this.currentURL);
+                this.currentURL = URL.createObjectURL(f.blob);
+                this.audio.src = this.currentURL;
                 this.audio.play().catch(() => {});
                 $('kcnxPlayerTitle').textContent = f.name;
                 $('kcnxPlayerSub').textContent = fmtBytes(f.size) + ' · Local file';
-                $('kcnxPlayerArt').innerHTML = '🎵';
                 this.renderPlaylist();
             },
 
@@ -1959,6 +2066,7 @@
                 if (!this.audio) return;
                 try { this.audio.pause(); } catch (e) {}
                 try { this.audio.currentTime = 0; } catch (e) {}
+                if (this.currentURL) { URL.revokeObjectURL(this.currentURL); this.currentURL = null; }
             }
         };
 
@@ -2217,31 +2325,156 @@
         };
 
         // ═══════════════════════════════════════════
-        //  FILE MANAGER
+        //  FILE MANAGER (IndexedDB-backed)
         // ═══════════════════════════════════════════
         const FileManager = {
             files: [],
             currentCat: 'all',
-            init() {
+            extFolderHandle: null,
+            extFolderFiles: [],
+            currentURLs: [],
+
+            async init() {
                 try {
-                    const raw = localStorage.getItem(FILES_KEY);
-                    if (raw) this.files = JSON.parse(raw) || [];
-                } catch (e) { this.files = []; }
+                    await KcnxDB.open();
+                    this.files = await KcnxDB.getAll();
+                } catch (e) {
+                    console.warn('IndexedDB unavailable, using in-memory:', e);
+                    this.files = [];
+                }
 
                 $('filesUpload').addEventListener('click', () => $('filesInput').click());
-                $('filesInput').addEventListener('change', (e) => this.handleUpload(e.target.files));
+                $('filesInput').addEventListener('change', (e) => {
+                    this.handleUpload(e.target.files);
+                    e.target.value = '';
+                });
+
+                $('filesMount').addEventListener('click', () => this.mountFolder());
 
                 $$('.files-side-item').forEach(item => {
                     item.addEventListener('click', () => {
                         $$('.files-side-item').forEach(x => x.classList.remove('active'));
                         item.classList.add('active');
-                        this.currentCat = item.dataset.cat;
+                        this.currentCat = item.dataset.cat || 'all';
                         this.render();
                     });
                 });
+
                 $('filePreviewClose').addEventListener('click', () => this.closePreview());
+
+                this.initDragDrop();
+
+                // Try to restore previous external folder handle
+                this.restoreExtFolder();
+
                 this.render();
             },
+
+            async restoreExtFolder() {
+                if (!('showDirectoryPicker' in window)) return;
+                try {
+                    const handle = await idbGetExtHandle();
+                    if (!handle) return;
+                    const perm = await handle.queryPermission({ mode: 'read' });
+                    if (perm === 'granted') {
+                        await this.setExtFolder(handle);
+                    } else {
+                        // Show item but don't auto-load
+                        $('extFolderItem').style.display = '';
+                        $('extFolderName').textContent = handle.name || 'External';
+                        $('extFolderItem').onclick = async () => {
+                            const p = await handle.requestPermission({ mode: 'readwrite' });
+                            if (p === 'granted') await this.setExtFolder(handle);
+                            else alert('Permission denied for external folder.');
+                        };
+                    }
+                } catch (e) {}
+            },
+
+            async mountFolder() {
+                if (!('showDirectoryPicker' in window)) {
+                    alert('Your browser does not support mounting folders.\n\nUse Chrome or Edge for this feature.');
+                    return;
+                }
+                try {
+                    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    await idbSaveExtHandle(handle);
+                    await this.setExtFolder(handle);
+                } catch (e) {
+                    if (e.name !== 'AbortError') alert('Failed to mount: ' + e.message);
+                }
+            },
+
+            async setExtFolder(handle) {
+                this.extFolderHandle = handle;
+                $('extFolderItem').style.display = '';
+                $('extFolderName').textContent = handle.name;
+                $('extFolderItem').classList.remove('active');
+                $('extFolderItem').onclick = () => {
+                    $$('.files-side-item').forEach(x => x.classList.remove('active'));
+                    $('extFolderItem').classList.add('active');
+                    this.currentCat = 'extfolder';
+                    this.render();
+                };
+                alert(`✓ Mounted "${handle.name}" — available in sidebar as a live external folder.`);
+            },
+
+            async loadExtFolder() {
+                const out = [];
+                if (!this.extFolderHandle) return out;
+                try {
+                    for await (const entry of this.extFolderHandle.values()) {
+                        if (entry.kind === 'file') {
+                            const f = await entry.getFile();
+                            out.push({
+                                id: 'ext_' + entry.name,
+                                name: entry.name,
+                                type: f.type || 'application/octet-stream',
+                                category: this.categorize(f.type, entry.name),
+                                size: f.size,
+                                date: f.lastModified,
+                                blob: f,
+                                external: true
+                            });
+                        }
+                    }
+                } catch (e) {
+                    alert('Lost access to external folder. Re-mount it.');
+                    $('extFolderItem').style.display = 'none';
+                    this.extFolderHandle = null;
+                }
+                return out;
+            },
+
+            initDragDrop() {
+                const wrap = $('filesWrap');
+                let dragDepth = 0;
+                ['dragenter', 'dragover'].forEach(evt => {
+                    wrap.addEventListener(evt, (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        if (evt === 'dragenter') dragDepth++;
+                        wrap.classList.add('dragover');
+                    });
+                });
+                ['dragleave', 'drop'].forEach(evt => {
+                    wrap.addEventListener(evt, (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        if (evt === 'dragleave') {
+                            dragDepth--;
+                            if (dragDepth <= 0) { dragDepth = 0; wrap.classList.remove('dragover'); }
+                        }
+                        if (evt === 'drop') {
+                            dragDepth = 0;
+                            wrap.classList.remove('dragover');
+                            const dt = e.dataTransfer;
+                            if (dt && dt.files && dt.files.length) {
+                                this.handleUpload(dt.files);
+                            }
+                        }
+                    });
+                });
+            },
+
             categorize(mime, name) {
                 if (!mime) mime = '';
                 if (mime.startsWith('image/')) return 'photos';
@@ -2250,69 +2483,87 @@
                 if (mime.startsWith('text/') || /\.(pdf|docx?|xlsx?|pptx?|txt|md)$/i.test(name)) return 'documents';
                 return 'other';
             },
-            handleUpload(fileList) {
+
+            async handleUpload(fileList) {
                 const files = Array.from(fileList || []);
                 if (!files.length) return;
-                let remaining = files.length;
-                const finish = () => {
-                    if (--remaining === 0) {
-                        this.save(); this.render();
-                        if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
-                    }
-                };
-                files.forEach(f => {
-                    if (f.size > 4 * 1024 * 1024) {
-                        alert(`"${f.name}" is larger than 4 MB and may exceed localStorage quota. Skipping.`);
-                        finish(); return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        this.files.push({
+
+                let added = 0;
+                for (const f of files) {
+                    try {
+                        const file = {
                             id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
                             name: f.name,
                             type: f.type || 'application/octet-stream',
                             category: this.categorize(f.type, f.name),
                             size: f.size,
                             date: Date.now(),
-                            dataUrl: reader.result
-                        });
-                        finish();
-                    };
-                    reader.onerror = () => finish();
-                    reader.readAsDataURL(f);
-                });
+                            blob: f
+                        };
+                        await KcnxDB.put(file);
+                        this.files.push(file);
+                        added++;
+                    } catch (e) {
+                        console.error('Failed to store file', f.name, e);
+                    }
+                }
+                this.render();
+                if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
+                if (added) console.log(`Added ${added} file(s)`);
             },
-            save() {
-                try { localStorage.setItem(FILES_KEY, JSON.stringify(this.files)); }
-                catch (e) { alert('Storage quota exceeded. Try deleting some files.'); }
-            },
-            deleteFile(id) {
+
+            async deleteFile(id) {
                 if (!confirm('Delete this file permanently?')) return;
+                try {
+                    await KcnxDB.delete(id);
+                } catch (e) {}
                 this.files = this.files.filter(f => f.id !== id);
-                this.save(); this.render();
+                this.render();
                 if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
             },
-            render() {
+
+            clearObjectURLs() {
+                this.currentURLs.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) {} });
+                this.currentURLs = [];
+            },
+
+            async render() {
                 const area = $('filesArea');
                 const toolbar = $('filesToolbar');
 
-                // Dropbox panel replaces the file grid
-                if (this.currentCat === 'dropbox') {
+                this.clearObjectURLs();
+
+                if (this.currentCat === 'cloud') {
                     toolbar.style.display = 'none';
                     area.style.display = 'block';
-                    DropboxManager.renderPanel();
+                    CloudPanel.render(area);
                     return;
                 }
 
                 toolbar.style.display = '';
                 area.style.display = 'grid';
 
-                const list = this.currentCat === 'all'
-                    ? this.files
-                    : this.files.filter(f => f.category === this.currentCat);
-                $('filesCount').textContent = `${list.length} file${list.length === 1 ? '' : 's'}`;
+                let list;
+                let countLabel;
+                if (this.currentCat === 'extfolder') {
+                    if (!this.extFolderHandle) {
+                        area.innerHTML = '<div class="files-empty">External folder not mounted. Click <strong>🔌 Mount Folder</strong> to connect one.</div>';
+                        $('filesCount').textContent = '0 files';
+                        return;
+                    }
+                    const ext = await this.loadExtFolder();
+                    list = ext;
+                    countLabel = `${list.length} file${list.length === 1 ? '' : 's'} · external`;
+                } else {
+                    list = this.currentCat === 'all'
+                        ? this.files
+                        : this.files.filter(f => f.category === this.currentCat);
+                    countLabel = `${list.length} file${list.length === 1 ? '' : 's'}`;
+                }
+                $('filesCount').textContent = countLabel;
+
                 if (!list.length) {
-                    area.innerHTML = '<div class="files-empty">No files here yet. Click ⬆ Upload to add files.</div>';
+                    area.innerHTML = '<div class="files-empty">No files here yet.<br>Click <strong>⬆ Upload</strong>, drag files onto this window, or use <strong>☁️ Cloud Storage</strong>.</div>';
                     return;
                 }
                 area.innerHTML = '';
@@ -2320,302 +2571,505 @@
                     const card = document.createElement('div');
                     card.className = 'file-card';
                     let thumb = '';
-                    if (f.category === 'photos') thumb = `<img src="${f.dataUrl}" alt="" />`;
-                    else if (f.category === 'videos') thumb = `<video src="${f.dataUrl}" muted preload="metadata"></video>`;
-                    else if (f.category === 'music') thumb = `<div class="icon">♪</div>`;
+                    if (f.category === 'photos' && f.blob) {
+                        const url = URL.createObjectURL(f.blob);
+                        this.currentURLs.push(url);
+                        thumb = `<img src="${url}" alt="" />`;
+                    } else if (f.category === 'videos' && f.blob) {
+                        thumb = `<video src="${URL.createObjectURL(f.blob)}" muted preload="metadata"></video>`;
+                    } else if (f.category === 'music') thumb = `<div class="icon">♪</div>`;
                     else if (f.category === 'documents') thumb = `<div class="icon">📄</div>`;
                     else thumb = `<div class="icon">📦</div>`;
 
                     card.innerHTML =
-                        `<button class="file-del" title="Delete">✕</button>` +
+                        (f.external ? '' : `<button class="file-del" title="Delete">✕</button>`) +
                         `<div class="file-thumb">${thumb}</div>` +
                         `<div class="file-name">${escapeHtml(f.name)}</div>` +
                         `<div class="file-size">${fmtBytes(f.size)}</div>`;
-                    card.querySelector('.file-del').addEventListener('click', (e) => {
+                    const del = card.querySelector('.file-del');
+                    if (del) del.addEventListener('click', (e) => {
                         e.stopPropagation(); this.deleteFile(f.id);
                     });
                     card.addEventListener('click', () => this.openPreview(f));
                     area.appendChild(card);
                 });
             },
+
             openPreview(f) {
                 if (f.category === 'music') {
-                    closeAllWindows();
                     KcnxPlayer.init();
-                    KcnxPlayer.refreshFromFiles();
-                    openWindow('win-kcnxplayer');
-                    const idx = KcnxPlayer.playlist.findIndex(x => x.id === f.id);
-                    if (idx >= 0) KcnxPlayer.playIndex(idx);
+                    // Only add to playlist if it's a local file
+                    if (!f.external) {
+                        closeAllWindows();
+                        KcnxPlayer.refreshFromFiles();
+                        openWindow('win-kcnxplayer');
+                        const idx = KcnxPlayer.playlist.findIndex(x => x.id === f.id);
+                        if (idx >= 0) KcnxPlayer.playIndex(idx);
+                    } else {
+                        closeAllWindows();
+                        openWindow('win-kcnxplayer');
+                        $('kcnxPlayerTitle').textContent = f.name;
+                        $('kcnxPlayerSub').textContent = fmtBytes(f.size) + ' · External';
+                        if (KcnxPlayer.currentURL) URL.revokeObjectURL(KcnxPlayer.currentURL);
+                        KcnxPlayer.currentURL = URL.createObjectURL(f.blob);
+                        KcnxPlayer.audio.src = KcnxPlayer.currentURL;
+                        KcnxPlayer.audio.play().catch(() => {});
+                    }
                     return;
                 }
                 const p = $('filePreview');
                 $('filePreviewTitle').textContent = f.name;
                 const body = $('filePreviewBody');
                 body.innerHTML = '';
+                const url = URL.createObjectURL(f.blob);
+                this.currentURLs.push(url);
                 if (f.category === 'photos') {
                     const img = document.createElement('img');
-                    img.src = f.dataUrl; body.appendChild(img);
+                    img.src = url; body.appendChild(img);
                 } else if (f.category === 'videos') {
                     const v = document.createElement('video');
-                    v.src = f.dataUrl; v.controls = true; v.autoplay = true;
+                    v.src = url; v.controls = true; v.autoplay = true;
                     body.appendChild(v);
-                } else if (f.category === 'documents' && f.type.startsWith('text/')) {
+                } else if (f.category === 'documents' && (f.type.startsWith('text/') || /\.(txt|md)$/i.test(f.name))) {
                     const pre = document.createElement('pre');
                     pre.style.cssText = 'color:#fff;background:#111;padding:1.5cqh 1.5cqw;border-radius:8px;max-width:80cqw;max-height:55cqh;overflow:auto;white-space:pre-wrap;font-size:clamp(11px,1cqw,15px);';
-                    try {
-                        const b64 = f.dataUrl.split(',')[1];
-                        pre.textContent = decodeURIComponent(escape(atob(b64)));
-                    } catch (e) { pre.textContent = '(binary content)'; }
+                    f.blob.text().then(txt => pre.textContent = txt).catch(() => pre.textContent = '(unable to read)');
                     body.appendChild(pre);
                 } else {
                     body.innerHTML = '<div style="color:#ccc;">No inline preview available for this file.</div>';
                 }
                 const dl = $('filePreviewDownload');
-                dl.href = f.dataUrl; dl.download = f.name;
+                dl.href = url; dl.download = f.name;
                 p.classList.add('open');
             },
+
             closePreview() {
                 $('filePreview').classList.remove('open');
                 $('filePreviewBody').innerHTML = '';
             }
         };
 
-        // ═══════════════════════════════════════════
-        //  DROPBOX MANAGER
-        // ═══════════════════════════════════════════
-        const DropboxManager = {
-            appKey: '',
-            sdkLoaded: false,
-            sdkLoading: false,
-            statusEl: null,
+        // External folder handle persistence helpers
+        const EXT_DB = 'kcnx_os_handles';
+        const EXT_STORE = 'handles';
 
-            init() {
-                try { this.appKey = localStorage.getItem(DROPBOX_KEY) || ''; } catch (e) { this.appKey = ''; }
-            },
-
-            setStatus(msg, cls) {
-                if (!this.statusEl) return;
-                this.statusEl.textContent = msg || '';
-                this.statusEl.className = 'dropbox-status' + (cls ? ' ' + cls : '');
-            },
-
-            loadSDK() {
-                return new Promise((resolve, reject) => {
-                    if (window.Dropbox) { this.sdkLoaded = true; return resolve(); }
-                    if (this.sdkLoading) {
-                        // Wait for existing load
-                        const wait = setInterval(() => {
-                            if (window.Dropbox) { clearInterval(wait); resolve(); }
-                        }, 100);
-                        setTimeout(() => { clearInterval(wait); reject(new Error('SDK load timeout')); }, 8000);
-                        return;
-                    }
-                    if (!this.appKey) { reject(new Error('No Dropbox App Key set')); return; }
-
-                    this.sdkLoading = true;
-                    // Remove old SDK if key changed
-                    const old = document.getElementById('dropboxjs');
-                    if (old) old.remove();
-
-                    const s = document.createElement('script');
-                    s.id = 'dropboxjs';
-                    s.type = 'text/javascript';
-                    s.src = 'https://www.dropbox.com/static/api/2/dropins.js';
-                    s.setAttribute('data-app-key', this.appKey);
-                    s.onload = () => {
-                        this.sdkLoaded = true;
-                        this.sdkLoading = false;
-                        resolve();
-                    };
-                    s.onerror = () => {
-                        this.sdkLoading = false;
-                        reject(new Error('Failed to load Dropbox SDK'));
-                    };
-                    document.head.appendChild(s);
+        function idbOpenHandles() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(EXT_DB, 1);
+                req.onupgradeneeded = () => {
+                    const db = req.result;
+                    if (!db.objectStoreNames.contains(EXT_STORE)) db.createObjectStore(EXT_STORE);
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+        async function idbSaveExtHandle(handle) {
+            try {
+                const db = await idbOpenHandles();
+                await new Promise((res, rej) => {
+                    const tx = db.transaction(EXT_STORE, 'readwrite');
+                    tx.objectStore(EXT_STORE).put(handle, 'extFolder');
+                    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
                 });
+            } catch (e) {}
+        }
+        async function idbGetExtHandle() {
+            try {
+                const db = await idbOpenHandles();
+                return await new Promise((res, rej) => {
+                    const tx = db.transaction(EXT_STORE, 'readonly');
+                    const req = tx.objectStore(EXT_STORE).get('extFolder');
+                    req.onsuccess = () => res(req.result);
+                    req.onerror = () => rej(req.error);
+                });
+            } catch (e) { return null; }
+        }
+
+        // ═══════════════════════════════════════════
+        //  CLOUD PANEL (Google Drive / OneDrive / Box)
+        // ═══════════════════════════════════════════
+        const CloudPanel = {
+            keys: {
+                google:   { apiKey: '', clientId: '' },
+                onedrive: { clientId: '' },
+                box:      { clientId: '' }
             },
 
-            renderPanel() {
-                const area = $('filesArea');
+            loadKeys() {
+                try {
+                    const raw = localStorage.getItem(CLOUD_KEYS_KEY);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        Object.assign(this.keys, parsed);
+                    }
+                } catch (e) {}
+            },
+            saveKeys() {
+                try { localStorage.setItem(CLOUD_KEYS_KEY, JSON.stringify(this.keys)); } catch (e) {}
+            },
+
+            setStatus(el, msg, cls) {
+                if (!el) return;
+                el.textContent = msg || '';
+                el.className = 'cloud-status' + (cls ? ' ' + cls : '');
+            },
+
+            async importFromCloud(sourceName, blob, filename) {
+                const file = {
+                    id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                    name: filename,
+                    type: blob.type || 'application/octet-stream',
+                    category: FileManager.categorize(blob.type, filename),
+                    size: blob.size,
+                    date: Date.now(),
+                    blob: blob
+                };
+                await KcnxDB.put(file);
+                FileManager.files.push(file);
+                return file;
+            },
+
+            render(area) {
+                this.loadKeys();
                 area.innerHTML = '';
                 const panel = document.createElement('div');
-                panel.className = 'dropbox-panel';
+                panel.className = 'cloud-panel';
+
                 panel.innerHTML =
-                    '<div class="dropbox-header">' +
-                        '<div class="dropbox-logo">☁️</div>' +
-                        '<div class="dropbox-title">Dropbox Transfer</div>' +
-                        '<div class="dropbox-sub">Move files between KCNX and your Dropbox</div>' +
+                    '<div class="cloud-header">' +
+                        '<div class="cloud-header-icon">☁️</div>' +
+                        '<div class="cloud-header-title">Cloud Storage</div>' +
+                        '<div class="cloud-header-sub">' +
+                            'Connect your cloud accounts to import files into KCNX or export KCNX files to the cloud. ' +
+                            'Each provider only needs a <strong>Client ID</strong> (and <strong>API Key</strong> for Google) created by you on their developer portal. ' +
+                            'Keys stay in your browser only.' +
+                        '</div>' +
                     '</div>' +
-                    '<div class="dropbox-key-row">' +
-                        `<input type="text" id="dropboxKeyInput" placeholder="Dropbox App Key (dropbox.com/developers/apps)" value="${this.appKey ? escapeHtml(this.appKey) : ''}" />` +
-                        '<button id="dropboxKeySave">Save Key</button>' +
-                    '</div>' +
-                    '<div class="dropbox-actions">' +
-                        '<button class="dropbox-action" id="dropboxImport">' +
-                            '<span class="dropbox-action-icon">⬇</span>' +
-                            '<span class="dropbox-action-label">Import from Dropbox</span>' +
-                            '<span class="dropbox-action-hint">Choose files from your Dropbox and add them to KCNX</span>' +
-                        '</button>' +
-                        '<button class="dropbox-action" id="dropboxExport">' +
-                            '<span class="dropbox-action-icon">⬆</span>' +
-                            '<span class="dropbox-action-label">Export to Dropbox</span>' +
-                            '<span class="dropbox-action-hint">Pick a KCNX file and save it to your Dropbox</span>' +
-                        '</button>' +
-                        '<button class="dropbox-action" id="dropboxOpenWeb">' +
-                            '<span class="dropbox-action-icon">🌐</span>' +
-                            '<span class="dropbox-action-label">Open Dropbox Web</span>' +
-                            '<span class="dropbox-action-hint">Open dropbox.com in a new browser tab</span>' +
-                        '</button>' +
-                    '</div>' +
-                    '<div class="dropbox-status" id="dropboxStatus"></div>' +
-                    '<div class="dropbox-help">' +
-                        '<strong>Setup:</strong> create a free app at ' +
-                        '<a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener">dropbox.com/developers/apps</a>' +
-                        ' → <em>Scoped access</em> → <em>Full Dropbox</em> → copy the <strong>App Key</strong> and paste above. ' +
-                        'The App Key is stored locally in your browser only.' +
-                    '</div>';
+                    '<div class="cloud-grid" id="cloudGrid"></div>';
 
                 area.appendChild(panel);
-                this.statusEl = $('dropboxStatus');
+                const grid = $('cloudGrid');
 
-                $('dropboxKeySave').addEventListener('click', () => {
-                    const v = $('dropboxKeyInput').value.trim();
-                    this.appKey = v;
-                    try { localStorage.setItem(DROPBOX_KEY, v); } catch (e) {}
-                    this.sdkLoaded = false;
-                    this.sdkLoading = false;
-                    const old = document.getElementById('dropboxjs');
-                    if (old) old.remove();
-                    if (window.Dropbox) { try { delete window.Dropbox; } catch (e) {} }
-                    this.setStatus(v ? '✓ App Key saved. SDK will reload on next action.' : 'App Key cleared.', 'ok');
-                });
+                // Google Drive card
+                grid.appendChild(this.buildCard({
+                    id: 'google',
+                    icon: ICONS.googledrive,
+                    name: 'Google Drive',
+                    sub: 'Import files · Export files',
+                    help: 'Create an OAuth Client ID + API Key at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">console.cloud.google.com</a> → enable the <strong>Google Picker API</strong> and <strong>Google Drive API</strong> → create an <em>OAuth Client ID (Web)</em> and an <em>API Key</em>. Add this page\'s origin as an authorized origin.',
+                    fields: [
+                        { key: 'apiKey',   label: 'API Key',   placeholder: 'AIza…' },
+                        { key: 'clientId', label: 'Client ID', placeholder: '12345-abc.apps.googleusercontent.com' }
+                    ],
+                    actions: [
+                        { label: '⬇ Import from Drive', cls: 'google primary',  handler: (status) => this.googleImport(status) },
+                        { label: '🌐 Open Drive',       cls: '',                 handler: () => window.open('https://drive.google.com', '_blank', 'noopener') }
+                    ]
+                }));
 
-                $('dropboxImport').addEventListener('click', () => this.import());
-                $('dropboxExport').addEventListener('click', () => this.export());
-                $('dropboxOpenWeb').addEventListener('click', () => {
-                    window.open('https://www.dropbox.com/home', '_blank', 'noopener');
-                });
+                // OneDrive card
+                grid.appendChild(this.buildCard({
+                    id: 'onedrive',
+                    icon: ICONS.onedrive,
+                    name: 'Microsoft OneDrive',
+                    sub: 'Import files · Export files',
+                    help: 'Register an app at <a href="https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps" target="_blank" rel="noopener">portal.azure.com</a> → add a <em>Web</em> platform with this page\'s origin → copy the <strong>Application (client) ID</strong>. No client secret needed for the JS SDK.',
+                    fields: [
+                        { key: 'clientId', label: 'Client ID', placeholder: 'Application (client) ID' }
+                    ],
+                    actions: [
+                        { label: '⬇ Import from OneDrive', cls: 'onedrive primary', handler: (status) => this.oneDriveImport(status) },
+                        { label: '⬆ Export to OneDrive',   cls: 'onedrive primary', handler: (status) => this.oneDriveExport(status) },
+                        { label: '🌐 Open OneDrive',       cls: '',                 handler: () => window.open('https://onedrive.live.com', '_blank', 'noopener') }
+                    ]
+                }));
+
+                // Box card
+                grid.appendChild(this.buildCard({
+                    id: 'box',
+                    icon: ICONS.box,
+                    name: 'Box',
+                    sub: 'Import files',
+                    help: 'Create a developer app at <a href="https://app.box.com/developers/console" target="_blank" rel="noopener">app.box.com/developers/console</a> → choose <em>Custom App → Standard OAuth 2.0 (User Authentication)</em> → copy the <strong>Client ID</strong> and add this page\'s origin to CORS.',
+                    fields: [
+                        { key: 'clientId', label: 'Client ID', placeholder: 'Box Client ID' }
+                    ],
+                    actions: [
+                        { label: '⬇ Import from Box', cls: 'primary', handler: (status) => this.boxImport(status) },
+                        { label: '🌐 Open Box',       cls: '',        handler: () => window.open('https://app.box.com', '_blank', 'noopener') }
+                    ]
+                }));
             },
 
-            async import() {
-                if (!this.appKey) {
-                    this.setStatus('✗ Set your Dropbox App Key first.', 'error');
+            buildCard(cfg) {
+                const card = document.createElement('div');
+                card.className = 'cloud-card';
+
+                const header = document.createElement('div');
+                header.className = 'cloud-card-header';
+                header.innerHTML =
+                    `<div class="cloud-card-icon"><img src="${cfg.icon}" alt="${escapeHtml(cfg.name)}" /></div>` +
+                    `<div class="cloud-card-info">` +
+                        `<div class="cloud-card-name">${escapeHtml(cfg.name)}</div>` +
+                        `<div class="cloud-card-sub">${escapeHtml(cfg.sub)}</div>` +
+                    `</div>`;
+                card.appendChild(header);
+
+                cfg.fields.forEach(f => {
+                    const row = document.createElement('div');
+                    row.className = 'cloud-key-row';
+                    const inp = document.createElement('input');
+                    inp.type = 'password';
+                    inp.placeholder = f.placeholder;
+                    inp.value = this.keys[cfg.id][f.key] || '';
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Save';
+                    btn.addEventListener('click', () => {
+                        this.keys[cfg.id][f.key] = inp.value.trim();
+                        this.saveKeys();
+                        this.setStatus(card._status, '✓ Saved', 'ok');
+                    });
+                    row.appendChild(inp);
+                    row.appendChild(btn);
+                    card.appendChild(row);
+                });
+
+                const help = document.createElement('div');
+                help.className = 'cloud-card-help';
+                help.innerHTML = cfg.help;
+                card.appendChild(help);
+
+                const actions = document.createElement('div');
+                actions.className = 'cloud-actions';
+                cfg.actions.forEach(a => {
+                    const btn = document.createElement('button');
+                    btn.className = 'cloud-btn ' + (a.cls || '');
+                    btn.textContent = a.label;
+                    btn.addEventListener('click', () => a.handler(card._status));
+                    actions.appendChild(btn);
+                });
+                card.appendChild(actions);
+
+                const status = document.createElement('div');
+                status.className = 'cloud-status';
+                card.appendChild(status);
+                card._status = status;
+
+                return card;
+            },
+
+            // ─── Google Drive ───
+            async googleImport(status) {
+                const k = this.keys.google;
+                if (!k.apiKey || !k.clientId) {
+                    this.setStatus(status, '✗ Set both API Key and Client ID first.', 'err');
                     return;
                 }
-                this.setStatus('⏳ Loading Dropbox SDK...');
+                this.setStatus(status, '⏳ Loading Google APIs...');
                 try {
-                    await this.loadSDK();
-                } catch (e) {
-                    this.setStatus('✗ ' + e.message, 'error');
-                    return;
-                }
-                this.setStatus('📂 Choose files from Dropbox...');
-                try {
-                    Dropbox.choose({
-                        success: (files) => {
-                            this.setStatus(`⏳ Importing ${files.length} file(s)...`);
-                            let remaining = files.length;
-                            let added = 0;
-                            files.forEach(f => {
-                                fetch(f.link)
-                                    .then(r => r.blob())
-                                    .then(blob => {
-                                        if (blob.size > 4 * 1024 * 1024) {
-                                            this.setStatus(`⚠ "${f.name}" is over 4 MB — skipped.`, 'error');
-                                            if (--remaining === 0) this.finishImport(added);
-                                            return;
-                                        }
-                                        const reader = new FileReader();
-                                        reader.onload = () => {
-                                            FileManager.files.push({
-                                                id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-                                                name: f.name,
-                                                type: f.type || 'application/octet-stream',
-                                                category: FileManager.categorize(f.type || '', f.name),
-                                                size: blob.size,
-                                                date: Date.now(),
-                                                dataUrl: reader.result
-                                            });
-                                            added++;
-                                            if (--remaining === 0) this.finishImport(added);
-                                        };
-                                        reader.onerror = () => { if (--remaining === 0) this.finishImport(added); };
-                                        reader.readAsDataURL(blob);
-                                    })
-                                    .catch(() => { if (--remaining === 0) this.finishImport(added); });
-                            });
-                        },
-                        cancel: () => this.setStatus('Import cancelled.'),
-                        linkType: 'direct',
-                        multiselect: true,
-                        extensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mp3', '.wav', '.ogg', '.pdf', '.txt', '.md', '.doc', '.docx']
+                    await loadScript('https://apis.google.com/js/api.js', 'gapi-script');
+                    await new Promise((res, rej) => {
+                        window.gapi.load('picker', { callback: res, onerror: rej });
                     });
                 } catch (e) {
-                    this.setStatus('✗ ' + e.message, 'error');
+                    this.setStatus(status, '✗ Failed to load Google Picker: ' + e.message, 'err');
+                    return;
                 }
+                this.setStatus(status, '📂 Opening Google Picker...');
+
+                const token = await new Promise((res, rej) => {
+                    const client = window.google.accounts.oauth2.initTokenClient({
+                        client_id: k.clientId,
+                        scope: 'https://www.googleapis.com/auth/drive.readonly',
+                        callback: (resp) => {
+                            if (resp.error) rej(new Error(resp.error));
+                            else res(resp.access_token);
+                        }
+                    });
+                    client.requestAccessToken();
+                }).catch(e => null);
+
+                if (!token) {
+                    this.setStatus(status, '✗ Authorization cancelled or failed.', 'err');
+                    return;
+                }
+
+                const picker = new window.google.picker.PickerBuilder()
+                    .addView(window.google.picker.ViewId.DOCS)
+                    .setOAuthToken(token)
+                    .setDeveloperKey(k.apiKey)
+                    .setCallback(async (data) => {
+                        if (data.action !== window.google.picker.Action.PICKED) return;
+                        const docs = data[window.google.picker.Response.DOCUMENTS] || [];
+                        this.setStatus(status, `⏳ Downloading ${docs.length} file(s)...`);
+                        let added = 0;
+                        for (const d of docs) {
+                            try {
+                                const r = await fetch(
+                                    `https://www.googleapis.com/drive/v3/files/${d.id}?alt=media`,
+                                    { headers: { Authorization: 'Bearer ' + token } }
+                                );
+                                if (!r.ok) continue;
+                                const blob = await r.blob();
+                                await this.importFromCloud('gdrive', blob, d.name);
+                                added++;
+                            } catch (e) { console.warn('Failed', d.name, e); }
+                        }
+                        await FileManager.render();
+                        if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
+                        this.setStatus(status, `✓ Imported ${added} file(s) from Google Drive.`, 'ok');
+                    })
+                    .build();
+                picker.setVisible(true);
             },
 
-            finishImport(added) {
-                FileManager.save();
-                if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
-                this.setStatus(`✓ Imported ${added} file(s) from Dropbox.`, 'ok');
-                // Refresh view to show updated file counts if user switches back
+            // ─── OneDrive ───
+            async oneDriveImport(status) {
+                const k = this.keys.onedrive;
+                if (!k.clientId) {
+                    this.setStatus(status, '✗ Set OneDrive Client ID first.', 'err');
+                    return;
+                }
+                this.setStatus(status, '⏳ Loading OneDrive SDK...');
+                try {
+                    await loadScript('https://js.live.net/v7.2/OneDrive.js', 'onedrive-sdk');
+                } catch (e) {
+                    this.setStatus(status, '✗ Failed to load OneDrive SDK: ' + e.message, 'err');
+                    return;
+                }
+                this.setStatus(status, '📂 Opening OneDrive picker...');
+
+                const self = this;
+                const odOptions = {
+                    clientId: k.clientId,
+                    action: 'query',
+                    multiSelect: true,
+                    advanced: { redirectUri: location.href.split('#')[0].split('?')[0] },
+                    success: async function (files) {
+                        self.setStatus(status, `⏳ Downloading ${files.value.length} file(s)...`);
+                        let added = 0;
+                        for (const f of files.value) {
+                            try {
+                                const url = f['@microsoft.graph.downloadUrl'] || f['@content.downloadUrl'];
+                                if (!url) continue;
+                                const r = await fetch(url);
+                                if (!r.ok) continue;
+                                const blob = await r.blob();
+                                await self.importFromCloud('onedrive', blob, f.name);
+                                added++;
+                            } catch (e) { console.warn('Failed', f.name, e); }
+                        }
+                        await FileManager.render();
+                        if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
+                        self.setStatus(status, `✓ Imported ${added} file(s) from OneDrive.`, 'ok');
+                    },
+                    cancel: function () { self.setStatus(status, 'Import cancelled.'); },
+                    error: function (e) { self.setStatus(status, '✗ OneDrive error: ' + (e && e.message || e), 'err'); }
+                };
+                window.OneDrive.open(odOptions);
             },
 
-            async export() {
-                if (!this.appKey) {
-                    this.setStatus('✗ Set your Dropbox App Key first.', 'error');
+            async oneDriveExport(status) {
+                const k = this.keys.onedrive;
+                if (!k.clientId) {
+                    this.setStatus(status, '✗ Set OneDrive Client ID first.', 'err');
                     return;
                 }
                 if (!FileManager.files.length) {
-                    this.setStatus('✗ No KCNX files to export yet.', 'error');
+                    this.setStatus(status, '✗ No local files to export.', 'err');
                     return;
                 }
-                // Show a picker
-                this.setStatus('Select a file to export:');
-                const area = $('filesArea');
-                const existingList = area.querySelector('.dropbox-file-list');
-                if (existingList) existingList.remove();
-                const list = document.createElement('div');
-                list.className = 'dropbox-file-list';
-                FileManager.files.slice().reverse().forEach(f => {
-                    const row = document.createElement('div');
-                    row.className = 'dropbox-file-row';
-                    let icon = '📦';
-                    if (f.category === 'photos') icon = '🖼️';
-                    else if (f.category === 'videos') icon = '🎬';
-                    else if (f.category === 'music') icon = '🎵';
-                    else if (f.category === 'documents') icon = '📄';
-                    row.innerHTML =
-                        `<span class="icon">${icon}</span>` +
-                        `<span class="name">${escapeHtml(f.name)}</span>` +
-                        `<span class="size">${fmtBytes(f.size)}</span>`;
-                    row.addEventListener('click', () => this.doExport(f));
-                    list.appendChild(row);
+                this.setStatus(status, '⏳ Loading OneDrive SDK...');
+                try {
+                    await loadScript('https://js.live.net/v7.2/OneDrive.js', 'onedrive-sdk');
+                } catch (e) {
+                    this.setStatus(status, '✗ Failed to load OneDrive SDK: ' + e.message, 'err');
+                    return;
+                }
+                // For simplicity, export the most recent file
+                const f = FileManager.files[FileManager.files.length - 1];
+                this.setStatus(status, `📤 Exporting "${f.name}"...`);
+                const self = this;
+                window.OneDrive.save({
+                    clientId: k.clientId,
+                    action: 'save',
+                    advanced: { redirectUri: location.href.split('#')[0].split('?')[0] },
+                    success: function () { self.setStatus(status, `✓ Saved "${f.name}" to OneDrive.`, 'ok'); },
+                    cancel: function () { self.setStatus(status, 'Export cancelled.'); },
+                    error: function (e) { self.setStatus(status, '✗ OneDrive error: ' + (e && e.message || e), 'err'); }
                 });
-                area.appendChild(list);
             },
 
-            async doExport(file) {
-                this.setStatus('⏳ Loading Dropbox SDK...');
-                try {
-                    await this.loadSDK();
-                } catch (e) {
-                    this.setStatus('✗ ' + e.message, 'error');
+            // ─── Box ───
+            async boxImport(status) {
+                const k = this.keys.box;
+                if (!k.clientId) {
+                    this.setStatus(status, '✗ Set Box Client ID first.', 'err');
                     return;
                 }
-                this.setStatus('☁️ Opening Dropbox Saver...');
+                this.setStatus(status, '⏳ Loading Box SDK...');
                 try {
-                    Dropbox.save(file.dataUrl, file.name, {
-                        success: () => this.setStatus(`✓ Saved "${file.name}" to Dropbox.`, 'ok'),
-                        cancel: () => this.setStatus('Export cancelled.'),
-                        progress: () => {}
-                    });
+                    // Box Content Picker SDK
+                    await loadScript('https://cdn01.boxcdn.net/platform/elements/17.0.0/en-US/picker.js', 'box-picker');
                 } catch (e) {
-                    this.setStatus('✗ ' + e.message, 'error');
+                    this.setStatus(status, '✗ Failed to load Box Picker: ' + e.message, 'err');
+                    return;
                 }
+
+                if (!window.BoxSelect) {
+                    this.setStatus(status, '✗ Box Picker SDK not available.', 'err');
+                    return;
+                }
+
+                this.setStatus(status, '📂 Opening Box picker...');
+                const self = this;
+                const boxSelect = new window.BoxSelect({
+                    clientId: k.clientId,
+                    container: document.body,
+                    button: false
+                });
+
+                boxSelect.success(async function (response) {
+                    const files = response || [];
+                    self.setStatus(status, `⏳ Downloading ${files.length} file(s)...`);
+                    let added = 0;
+                    for (const f of files) {
+                        try {
+                            // Box picker returns shared links — we can't directly fetch without auth.
+                            // Best-effort: open the file's shared link
+                            if (f.sharedLink) window.open(f.sharedLink, '_blank', 'noopener');
+                            // Add a placeholder entry so user at least sees it
+                            const placeholder = new Blob([`Box file: ${f.name || 'unknown'}\nShared link: ${f.sharedLink || 'N/A'}\n\nNote: Box Content Picker does not provide direct file download. Click the shared link to open it.`], { type: 'text/plain' });
+                            await self.importFromCloud('box', placeholder, (f.name || 'box_file') + '.txt');
+                            added++;
+                        } catch (e) { console.warn('Failed', f, e); }
+                    }
+                    await FileManager.render();
+                    self.setStatus(status, `✓ Added ${added} Box reference(s). Open the shared links to view.`, 'ok');
+                });
+
+                boxSelect.cancel(function () {
+                    self.setStatus(status, 'Import cancelled.');
+                });
+
+                boxSelect.launch();
             }
         };
+
+        // Dynamic script loader (idempotent)
+        function loadScript(src, id) {
+            return new Promise((resolve, reject) => {
+                if (id && document.getElementById(id)) return resolve();
+                const s = document.createElement('script');
+                if (id) s.id = id;
+                s.src = src;
+                s.async = true;
+                s.onload = () => resolve();
+                s.onerror = () => reject(new Error('Failed to load ' + src));
+                document.head.appendChild(s);
+            });
+        }
 
         // ═══════════════════════════════════════════
         //  APP ACTIONS
@@ -2625,18 +3079,22 @@
             openCalc:       () => openWindow('win-calculator'),
             openNotepad:    () => openWindow('win-notepad'),
             openBrowser:    () => openWindow('win-browser'),
-            openFiles:      () => { openWindow('win-files'); FileManager.currentCat = 'all'; FileManager.render(); },
-            openFilesDropbox: () => {
+            openFiles:      () => {
                 openWindow('win-files');
-                FileManager.currentCat = 'dropbox';
-                $$('.files-side-item').forEach(x => x.classList.toggle('active', x.dataset.cat === 'dropbox'));
+                FileManager.currentCat = 'all';
+                $$('.files-side-item').forEach(x => x.classList.toggle('active', x.dataset.cat === 'all'));
+                FileManager.render();
+            },
+            openCloud: () => {
+                openWindow('win-files');
+                FileManager.currentCat = 'cloud';
+                $$('.files-side-item').forEach(x => x.classList.toggle('active', x.dataset.cat === 'cloud'));
                 FileManager.render();
             }
         };
 
         // ═══════════════════════════════════════════
-        //  KEYBOARD — E closes topmost app, Q exits fullscreen
-        //             Esc left to Chrome
+        //  KEYBOARD
         // ═══════════════════════════════════════════
         function closeTopLayer() {
             const preview = $('filePreview');
@@ -2653,14 +3111,12 @@
             if (panelOpen) { closePanel(); return true; }
             return false;
         }
-
         function exitFullscreenWithQ() {
             if (document.fullscreenElement) {
                 userExitedFullscreen = true;
                 document.exitFullscreen().catch(() => {});
             }
         }
-
         window.addEventListener('keydown', (e) => {
             const t = e.target;
             const isTyping = t && (
@@ -2669,31 +3125,23 @@
                 t.tagName === 'SELECT' ||
                 t.isContentEditable
             );
-
             if (!isTyping && !e.ctrlKey && !e.metaKey && !e.altKey &&
                 (e.key === 'q' || e.key === 'Q')) {
                 if (document.fullscreenElement) {
                     exitFullscreenWithQ();
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
                     return;
                 }
             }
-
             if (!isTyping && !e.ctrlKey && !e.metaKey && !e.altKey &&
                 (e.key === 'e' || e.key === 'E')) {
                 const handled = closeTopLayer();
                 if (handled) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
                     return;
                 }
             }
-
             Calculator.handleKey(e);
-
             if ($('win-notepad').classList.contains('open')) {
                 const ctrl = e.ctrlKey || e.metaKey;
                 if (ctrl && e.key.toLowerCase() === 's') { e.preventDefault(); Notepad.action(e.shiftKey ? 'saveAs' : 'save'); }
@@ -2712,10 +3160,6 @@
                       el.msRequestFullscreen ? el.msRequestFullscreen() : null;
             if (p && typeof p.catch === 'function') p.catch(() => {});
         }
-
-        // No toast on fullscreenchange — silent
-        document.addEventListener('fullscreenchange', () => { /* intentionally silent */ });
-
         ['click', 'touchstart', 'keydown', 'mousedown'].forEach(evt => {
             document.addEventListener(evt, function h() {
                 ['click', 'touchstart', 'keydown', 'mousedown'].forEach(x => document.removeEventListener(x, h));
@@ -2727,16 +3171,14 @@
         // ═══════════════════════════════════════════
         //  INIT
         // ═══════════════════════════════════════════
-        function init() {
+        async function init() {
             buildWallpaperSlots();
             buildAppsGrid();
-
             Calculator.init();
             Notepad.init();
             Browser.init();
-            FileManager.init();
             KcnxPlayer.init();
-            DropboxManager.init();
+            await FileManager.init();
 
             const welcomeAlreadySeen = localStorage.getItem(WELCOME_KEY) === 'true';
             if (!welcomeAlreadySeen) {
@@ -2762,6 +3204,7 @@
             if (clockInterval) clearInterval(clockInterval);
             if (lockOverlayTimer) clearTimeout(lockOverlayTimer);
             if (welcomeTimer) clearTimeout(welcomeTimer);
+            FileManager.clearObjectURLs();
         });
 
         document.addEventListener('visibilitychange', () => {
