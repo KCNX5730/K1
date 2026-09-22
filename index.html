@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>KCNX Web Operating System</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%; overflow: hidden; background: #000;
+            font-family: 'Consolas', 'Courier New', monospace; color: #fff;
+            user-select: none; -webkit-user-select: none; touch-action: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ───────────── 16:9 STAGE ───────────── */
+        #os-container {
+            position: relative;
+            width: min(100vw, calc(100vh * 16 / 9));
+            width: min(100dvw, calc(100dvh * 16 / 9));
+            aspect-ratio: 16 / 9;
+            max-height: 100dvh;
+            background: #000;
+            overflow: hidden;
+            container-type: size;
+            container-name: os;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.95);
+        }
+
+        .wallpaper-layer {
+            position: absolute; inset: 0; z-index: 0;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            opacity: 0; transition: opacity 0.5s ease; pointer-events: none;
+        }
+
+        .screen {
+            position: absolute; inset: 0; z-index: 1;
+            display: none; flex-direction: column;
+            background: #000; overflow: hidden;
+        }
+        .screen.active { display: flex; }
+
+        /* ───────────── BOOT MANAGER ───────────── */
+        #bootManager {
+            justify-content: flex-start;
+            padding: 4cqh 4cqw; background: #000;
+            font-size: clamp(11px, 1.05cqw, 22px); line-height: 1.75;
+            overflow-y: auto;
+        }
+        #bootManager .top-label {
+            font-size: clamp(10px, 0.85cqw, 18px); color: #aaa;
+            margin-bottom: 2.6cqh; letter-spacing: 0.5px;
+            border-bottom: 1px solid #222; padding-bottom: 1cqh;
+        }
+        #bootManager .boot-text {
+            white-space: pre-wrap;
+            font-size: clamp(11px, 1.05cqw, 22px); line-height: 1.85; max-width: 100%;
+        }
+        #bootManager .boot-text .highlight { color: #8af; }
+        #bootManager .input-line {
+            display: flex; align-items: center; gap: 0.5cqw;
+            margin-top: 3cqh; font-size: clamp(11px, 1.1cqw, 24px);
+        }
+        #bootManager .input-line input {
+            background: transparent; border: none; outline: none; color: #fff;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: inherit; width: 3.2em; caret-color: #fff;
+            padding: 0; margin: 0;
+        }
+        #bootManager .cursor-blink {
+            display: inline-block; width: 0.65em; height: 1.1em; background: #fff;
+            animation: blink 1s step-end infinite; vertical-align: bottom; margin-left: 2px;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        #bootManager .cancel-msg {
+            color: #f66; margin-top: 1.4cqh;
+            font-size: clamp(10px, 0.95cqw, 20px);
+            min-height: 2.4cqh; opacity: 0; transition: opacity 0.3s;
+        }
+        #bootManager .cancel-msg.show { opacity: 1; }
+
+        /* ───────────── BOOTING ───────────── */
+        #bootingScreen { justify-content: center; align-items: center; background: #000; gap: 3cqh; }
+        #bootingScreen .loader-wrap { display: flex; flex-direction: column; align-items: center; gap: 2.4cqh; }
+        #bootingScreen .spinner {
+            width: clamp(50px, 6cqw, 110px); height: clamp(50px, 6cqw, 110px);
+            border: 4px solid transparent; border-top: 4px solid #fff; border-right: 4px solid #fff;
+            border-radius: 50%; animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #bootingScreen .boot-status {
+            font-size: clamp(14px, 1.4cqw, 30px); color: #ddd;
+            letter-spacing: 1px; text-align: center; min-height: 3.6cqh;
+        }
+        #bootingScreen .download-progress {
+            margin-top: 1cqh; width: clamp(200px, 30cqw, 540px); height: 5px;
+            background: #1a1a1a; border-radius: 6px; overflow: hidden;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        #bootingScreen .download-progress.show { opacity: 1; }
+        #bootingScreen .download-progress .bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #8af, #4af);
+            border-radius: 6px; transition: width 0.25s ease;
+        }
+        #bootingScreen .dl-status {
+            font-size: clamp(10px, 0.9cqw, 18px); color: #999;
+            letter-spacing: 0.5px; min-height: 2.4cqh;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        #bootingScreen .dl-status.show { opacity: 1; }
+
+        /* ───────────── WELCOME ───────────── */
+        #welcomeScreen { background: #000; justify-content: center; align-items: center; }
+        #welcomeScreen video { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; background: #000; }
+
+        /* ───────────── LOCK SCREEN ───────────── */
+        #lockScreen {
+            --panel-w: clamp(200px, 22cqw, 340px);
+            z-index: 2; background: transparent;
+            justify-content: center; align-items: center; position: absolute;
+        }
+        #lockScreen .overlay {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            pointer-events: none; z-index: 10;
+            background: rgba(0, 0, 0, 0.2);
+            opacity: 0; transition: opacity 1s ease;
+        }
+        #lockScreen .overlay.visible { opacity: 1; }
+
+        .lock-content {
+            position: absolute; bottom: 8cqh; right: 6cqw;
+            display: flex; flex-direction: column; align-items: flex-end; text-align: right;
+            z-index: 12; pointer-events: none;
+        }
+        .lock-time {
+            font-weight: 700;
+            font-size: clamp(3rem, 9cqw, 8rem);
+            letter-spacing: 0.02em; color: #fff;
+            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.55); line-height: 1;
+        }
+        .lock-date {
+            font-size: clamp(0.85rem, 1.6cqw, 1.7rem);
+            font-weight: 400; letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.88);
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            margin-top: 0.6cqh; text-transform: uppercase;
+        }
+        .lock-weather {
+            font-size: clamp(0.9rem, 1.4cqw, 1.5rem);
+            color: rgba(255, 255, 255, 0.85);
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            margin-top: 1.2cqh; letter-spacing: 0.04em;
+            display: flex; align-items: center; justify-content: flex-end; gap: 0.8cqw;
+        }
+        .lock-weather .temp { font-weight: 600; font-size: clamp(1.1rem, 2.1cqw, 2.3rem); }
+        .lock-weather .condition { font-size: clamp(0.75rem, 1.2cqw, 1.3rem); opacity: 0.85; }
+
+        /* up-arrow */
+        .bottom-up-arrow {
+            position: absolute; bottom: 2.4cqh; left: 50%;
+            transform: translateX(-50%);
+            width: clamp(26px, 2.4cqw, 42px); height: clamp(26px, 2.4cqw, 42px);
+            background: transparent; border: none; padding: 0;
+            cursor: pointer; z-index: 30; -webkit-tap-highlight-color: transparent;
+            animation: arrowFloat 2.4s ease-in-out infinite;
+        }
+        .bottom-up-arrow img {
+            width: 100%; height: 100%; object-fit: contain;
+            filter: invert(1) brightness(1.15) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+            opacity: 0.9; transition: opacity 0.2s;
+        }
+        .bottom-up-arrow:hover img { opacity: 1; }
+        @keyframes arrowFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50%      { transform: translateX(-50%) translateY(-4px); }
+        }
+
+        /* panel toggle */
+        .panel-toggle {
+            position: absolute; top: 50%; left: 0;
+            transform: translateY(-50%);
+            width: clamp(28px, 2.4cqw, 42px); height: clamp(44px, 5.5cqh, 72px);
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12); border-left: none;
+            border-radius: 0 12px 12px 0;
+            cursor: pointer; z-index: 17;
+            display: flex; align-items: center; justify-content: center; padding: 0;
+            transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .panel-toggle:hover { background: rgba(0, 0, 0, 0.75); }
+        .panel-toggle img {
+            width: 55%; height: 55%; object-fit: contain;
+            filter: invert(1) brightness(1.15);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .panel-toggle.open { left: var(--panel-w); }
+        .panel-toggle.open img { transform: rotate(180deg); }
+
+        /* wallpaper panel */
+        .wallpaper-panel {
+            position: absolute; top: 0; left: 0;
+            height: 100%; width: var(--panel-w);
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+            border-right: 1px solid rgba(255, 255, 255, 0.12);
+            transform: translateX(-100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 15; display: flex; flex-direction: column;
+            padding: 3.5cqh 2cqw; gap: 2.4cqh;
+            overflow-y: auto; pointer-events: auto;
+        }
+        .wallpaper-panel.open { transform: translateX(0); }
+
+        .panel-header {
+            display: flex; flex-direction: column; align-items: center; gap: 1.1cqh;
+            padding-bottom: 1.8cqh; border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .settings-icon {
+            width: clamp(24px, 3cqw, 46px); height: clamp(24px, 3cqw, 46px);
+            object-fit: contain; filter: invert(1) brightness(1.1); opacity: 0.95;
+            animation: slowSpin 12s linear infinite;
+        }
+        @keyframes slowSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .panel-title {
+            font-size: clamp(9px, 0.95cqw, 15px);
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7); font-weight: 500;
+        }
+        .wallpaper-slots { display: flex; flex-direction: column; gap: 1.8cqh; }
+        .wallpaper-slot {
+            width: 100%; aspect-ratio: 16 / 9;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            border: 2px solid rgba(255, 255, 255, 0.15); border-radius: 12px;
+            cursor: pointer; padding: 0; position: relative; overflow: hidden;
+            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+            -webkit-tap-highlight-color: transparent; outline: none;
+        }
+        .wallpaper-slot:hover { transform: scale(1.03); border-color: rgba(255, 255, 255, 0.45); }
+        .wallpaper-slot:focus-visible { border-color: #8af; }
+        .wallpaper-slot.active {
+            border-color: #8af;
+            box-shadow: 0 0 22px rgba(138, 170, 255, 0.6), inset 0 0 0 1px rgba(138, 170, 255, 0.35);
+            transform: scale(1.02);
+        }
+        .wallpaper-slot.active::after {
+            content: ''; position: absolute; inset: 0; border-radius: 10px;
+            background: linear-gradient(180deg, rgba(138, 170, 255, 0.12), rgba(138, 170, 255, 0.02));
+            pointer-events: none;
+        }
+
+        #swipeCatcher {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 13; touch-action: none; pointer-events: auto;
+        }
+
+        /* ───────────── HOME / APP DRAWER ───────────── */
+        .home-screen {
+            position: absolute; inset: 0; z-index: 3;
+            background: rgba(0, 0, 0, 0.32);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex; flex-direction: column;
+            padding: 7cqh 5cqw 5cqh;
+            overflow-y: auto; touch-action: none;
+        }
+        .home-screen.open { transform: translateY(0); }
+
+        /* Clickable drag handle (close button) */
+        .drag-handle {
+            position: absolute; top: 1.2cqh; left: 50%;
+            transform: translateX(-50%);
+            width: clamp(80px, 9cqw, 140px);
+            height: clamp(28px, 3.6cqh, 42px);
+            background: transparent; border: none; padding: 0;
+            cursor: pointer; z-index: 5;
+            display: flex; align-items: center; justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .drag-handle::before {
+            content: '';
+            display: block;
+            width: clamp(46px, 5cqw, 84px);
+            height: 4px;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 3px;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .drag-handle:hover::before {
+            background: rgba(255, 255, 255, 0.95);
+            transform: scaleY(1.4);
+        }
+        .drag-handle:active::before {
+            background: #8af;
+        }
+
+        .apps-grid {
+            display: flex; flex-wrap: wrap;
+            justify-content: center; align-content: flex-start;
+            gap: clamp(14px, 2.4cqw, 42px);
+            max-width: 100%;
+            margin: auto 0;
+        }
+
+        .app-tile {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 1cqh; text-decoration: none; color: #fff;
+            cursor: pointer; transition: transform 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            width: clamp(64px, 7.5cqw, 118px);
+        }
+        .app-tile:hover { transform: translateY(-4px); }
+        .app-tile:active { transform: scale(0.94); }
+
+        .app-icon {
+            width: 100%; aspect-ratio: 1 / 1;
+            border-radius: 22%;
+            background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            padding: 14%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 -2px 6px rgba(0, 0, 0, 0.06);
+            overflow: hidden; transition: box-shadow 0.25s;
+        }
+        .app-tile:hover .app-icon {
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), inset 0 -2px 6px rgba(0, 0, 0, 0.06);
+        }
+        .app-icon img, .app-icon svg {
+            width: 100%; height: 100%; object-fit: contain;
+            pointer-events: none; user-select: none;
+        }
+        .app-name {
+            font-size: clamp(9px, 0.78cqw, 14px);
+            letter-spacing: 0.04em;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+            text-align: center; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+        }
+
+        /* ───────────── APP WINDOWS ───────────── */
+        .app-window {
+            position: absolute;
+            top: 4%; left: 4%;
+            width: 92%; height: 92%;
+            background: #1c1c1e;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: none; flex-direction: column;
+            z-index: 100;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85);
+            overflow: hidden;
+        }
+        .app-window.open { display: flex; }
+
+        .window-titlebar {
+            height: clamp(30px, 4cqh, 44px);
+            flex-shrink: 0;
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 0 1.2cqw;
+            background: #2a2a2e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .window-title {
+            font-size: clamp(11px, 1cqw, 15px);
+            color: #ddd; letter-spacing: 0.06em;
+            display: flex; align-items: center; gap: 0.6cqw;
+        }
+        .window-title img { width: 1.3em; height: 1.3em; object-fit: contain; }
+        .window-close {
+            background: transparent; border: none; color: #fff;
+            width: clamp(20px, 1.8cqw, 30px); height: clamp(20px, 1.8cqw, 30px);
+            border-radius: 6px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(14px, 1.3cqw, 20px);
+            transition: background 0.15s; -webkit-tap-highlight-color: transparent;
+        }
+        .window-close:hover { background: #ff3b30; }
+        .window-body {
+            flex: 1; overflow: auto;
+            display: flex; flex-direction: column;
+            background: #1c1c1e;
+            position: relative;
+        }
+
+        /* ───────────── KCNX MUSIC PLAYER ───────────── */
+        .kcnx-player-wrap {
+            display: flex; flex-direction: column;
+            height: 100%;
+            background: linear-gradient(180deg, #1a1a24 0%, #0e0e14 100%);
+            padding: 2cqh 3cqw;
+            gap: 1.6cqh;
+            overflow-y: auto;
+        }
+        .kcnx-player-now {
+            display: flex; align-items: center; gap: 1.6cqw;
+            padding: 1.8cqh 1.6cqw;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            flex-shrink: 0;
+        }
+        .kcnx-player-art {
+            width: clamp(60px, 8cqw, 120px);
+            height: clamp(60px, 8cqw, 120px);
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ff6b35, #e50914);
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(28px, 3.6cqw, 56px);
+            flex-shrink: 0;
+            box-shadow: 0 10px 30px rgba(229, 9, 20, 0.35);
+            overflow: hidden;
+        }
+        .kcnx-player-art img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .kcnx-player-info { flex: 1; min-width: 0; }
+        .kcnx-player-title {
+            font-size: clamp(13px, 1.35cqw, 20px);
+            font-weight: 700; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .kcnx-player-sub {
+            font-size: clamp(10px, 0.95cqw, 15px);
+            color: rgba(255, 255, 255, 0.55);
+            margin-top: 0.5cqh;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .kcnx-player-controls {
+            display: flex; align-items: center; justify-content: center;
+            gap: 2cqw; flex-shrink: 0;
+        }
+        .kcnx-player-btn {
+            width: clamp(42px, 4.2cqw, 64px);
+            height: clamp(42px, 4.2cqw, 64px);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(16px, 1.5cqw, 24px);
+            transition: background 0.15s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .kcnx-player-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .kcnx-player-btn:active { transform: scale(0.94); }
+        .kcnx-player-btn.big {
+            width: clamp(58px, 5.8cqw, 88px);
+            height: clamp(58px, 5.8cqw, 88px);
+            background: linear-gradient(135deg, #ff6b35, #e50914);
+            border: none;
+            font-size: clamp(22px, 2.2cqw, 34px);
+            box-shadow: 0 8px 26px rgba(229, 9, 20, 0.45);
+        }
+        .kcnx-player-btn.big:hover {
+            background: linear-gradient(135deg, #ff8555, #ff1e28);
+        }
+        .kcnx-player-progress {
+            display: flex; align-items: center; gap: 1cqw;
+            flex-shrink: 0;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .kcnx-player-progress input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none; appearance: none;
+            height: 4px; border-radius: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            outline: none; cursor: pointer;
+        }
+        .kcnx-player-progress input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #ff6b35;
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.7);
+            cursor: pointer;
+        }
+        .kcnx-player-progress input[type="range"]::-moz-range-thumb {
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #ff6b35;
+            border: none;
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.7);
+            cursor: pointer;
+        }
+        .kcnx-player-playlist {
+            flex: 1; min-height: 0;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1cqh 1cqw;
+            overflow-y: auto;
+        }
+        .kcnx-player-playlist-header {
+            font-size: clamp(9px, 0.85cqw, 13px);
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.16em; text-transform: uppercase;
+            padding: 0.4cqh 0.6cqw 0.9cqh;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 0.6cqh;
+        }
+        .kcnx-track {
+            display: flex; align-items: center; gap: 0.9cqw;
+            padding: 0.9cqh 0.9cqw;
+            border-radius: 8px; cursor: pointer;
+            transition: background 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .kcnx-track:hover { background: rgba(255, 255, 255, 0.06); }
+        .kcnx-track.playing {
+            background: rgba(255, 107, 53, 0.15);
+            border-left: 3px solid #ff6b35;
+            padding-left: 0.6cqw;
+        }
+        .kcnx-track-num {
+            width: 2em; text-align: center;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            color: rgba(255, 255, 255, 0.4);
+            flex-shrink: 0;
+        }
+        .kcnx-track.playing .kcnx-track-num { color: #ff6b35; font-weight: 700; }
+        .kcnx-track-name {
+            flex: 1; font-size: clamp(11px, 1cqw, 15px);
+            color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .kcnx-track-size {
+            font-size: clamp(9px, 0.8cqw, 12px);
+            color: rgba(255, 255, 255, 0.4);
+            flex-shrink: 0;
+        }
+        .kcnx-player-empty {
+            text-align: center;
+            padding: 4cqh 2cqw;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: clamp(11px, 1cqw, 15px);
+            line-height: 1.8;
+        }
+        .kcnx-player-empty strong { color: #8af; }
+        .kcnx-player-footer {
+            display: flex; justify-content: center;
+            padding-top: 0.6cqh; flex-shrink: 0;
+        }
+        .kcnx-exit-btn {
+            background: linear-gradient(135deg, #ff3b30, #c81e14);
+            color: #fff;
+            border: none; border-radius: 10px;
+            padding: 1.1cqh 2.4cqw;
+            font-family: inherit; font-size: clamp(11px, 1.05cqw, 16px);
+            font-weight: 700; letter-spacing: 0.06em;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 0.7cqw;
+            box-shadow: 0 6px 22px rgba(255, 59, 48, 0.45);
+            transition: transform 0.1s, box-shadow 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .kcnx-exit-btn:hover {
+            box-shadow: 0 8px 30px rgba(255, 59, 48, 0.65);
+        }
+        .kcnx-exit-btn:active { transform: scale(0.96); }
+        .kcnx-exit-btn .power-icon {
+            font-size: 1.15em; line-height: 1;
+        }
+
+        /* ───────────── CALCULATOR ───────────── */
+        .calc-wrap {
+            display: flex; flex-direction: column;
+            height: 100%; padding: 1.6cqh 1.5cqw; gap: 1.2cqh;
+            background: #151517;
+        }
+        .calc-display {
+            background: #0a0a0c; border-radius: 10px;
+            padding: 1.4cqh 1.4cqw; text-align: right;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            min-height: 14cqh;
+            display: flex; flex-direction: column;
+            align-items: flex-end; justify-content: flex-end;
+            overflow: hidden;
+        }
+        .calc-expr {
+            font-size: clamp(11px, 1.1cqw, 18px);
+            color: #888; min-height: 1.4em;
+            letter-spacing: 0.03em; word-break: break-all;
+        }
+        .calc-result {
+            font-size: clamp(26px, 3.6cqw, 64px);
+            font-weight: 700; color: #fff;
+            letter-spacing: 0.02em; line-height: 1.1;
+            word-break: break-all; margin-top: 0.4cqh;
+        }
+        .calc-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: clamp(4px, 0.6cqw, 10px);
+        }
+        .calc-btn {
+            background: #2a2a2e; color: #fff; border: none; border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: clamp(15px, 1.6cqw, 26px);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, transform 0.05s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .calc-btn:hover { background: #3a3a3e; }
+        .calc-btn:active { transform: scale(0.97); }
+        .calc-btn.op { background: #3a3a42; color: #ff9f0a; }
+        .calc-btn.op:hover { background: #4a4a52; }
+        .calc-btn.fn { background: #26262a; color: #ff9f0a; }
+        .calc-btn.fn:hover { background: #36363a; }
+        .calc-btn.eq { background: #ff9f0a; color: #fff; font-weight: 700; grid-row: span 2; }
+        .calc-btn.eq:hover { background: #ffb340; }
+
+        /* ───────────── NOTEPAD ───────────── */
+        .notepad-wrap { display: flex; flex-direction: column; height: 100%; background: #fff; color: #000; }
+        .notepad-menubar {
+            display: flex; gap: 0.2cqw; padding: 0.4cqh 0.4cqw;
+            background: #f0f0f0; border-bottom: 1px solid #d0d0d0;
+            font-size: clamp(10px, 0.95cqw, 14px); flex-shrink: 0;
+        }
+        .notepad-menu {
+            padding: 0.4cqh 0.9cqw; border-radius: 4px;
+            cursor: pointer; position: relative; color: #333;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .notepad-menu:hover { background: #e0e0e0; }
+        .notepad-menu.open { background: #d6e6ff; }
+        .notepad-dropdown {
+            position: absolute; top: 100%; left: 0;
+            background: #fff; border: 1px solid #c0c0c0;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            border-radius: 4px; padding: 0.4cqh 0;
+            min-width: 180px; z-index: 5;
+            display: none; font-size: clamp(10px, 0.95cqw, 14px); color: #222;
+        }
+        .notepad-menu.open .notepad-dropdown { display: block; }
+        .notepad-dropdown button {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; padding: 0.7cqh 1cqw;
+            background: transparent; border: none; cursor: pointer;
+            font-family: inherit; font-size: inherit; color: inherit; text-align: left;
+        }
+        .notepad-dropdown button:hover { background: #e6f0ff; }
+        .notepad-dropdown .sep { height: 1px; background: #e0e0e0; margin: 0.4cqh 0; }
+        .notepad-dropdown .shortcut { color: #888; font-size: 0.9em; }
+        .notepad-textarea {
+            flex: 1; padding: 1.2cqh 1.4cqw;
+            border: none; outline: none; resize: none;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: clamp(12px, 1.05cqw, 17px);
+            color: #000; background: #fff; line-height: 1.5;
+        }
+        .notepad-status {
+            display: flex; justify-content: space-between;
+            padding: 0.5cqh 1cqw;
+            background: #f0f0f0; border-top: 1px solid #d0d0d0;
+            font-size: clamp(9px, 0.8cqw, 12px); color: #444;
+            flex-shrink: 0;
+        }
+
+        /* ───────────── BROWSER ───────────── */
+        .browser-wrap { display: flex; flex-direction: column; height: 100%; background: #202124; }
+        .browser-toolbar {
+            display: flex; align-items: center; gap: 0.7cqw;
+            padding: 1cqh 1.2cqw;
+            background: #2a2a2e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+        .engine-select {
+            background: #1c1c1e; color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px; padding: 0.7cqh 0.6cqw;
+            font-family: inherit; font-size: clamp(10px, 0.9cqw, 14px);
+            cursor: pointer; outline: none;
+        }
+        .browser-input {
+            flex: 1;
+            background: #1c1c1e; color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 0.9cqh 1.2cqw;
+            font-family: inherit; font-size: clamp(11px, 1cqw, 15px);
+            outline: none;
+        }
+        .browser-input:focus { border-color: #8af; }
+        .browser-go {
+            background: #8af; color: #001a33;
+            border: none; border-radius: 20px;
+            padding: 0.9cqh 1.4cqw;
+            font-family: inherit; font-weight: 700;
+            font-size: clamp(11px, 1cqw, 15px);
+            cursor: pointer;
+        }
+        .browser-go:hover { background: #a8c4ff; }
+        .browser-home {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 2.5cqh; padding: 3cqh;
+            background: radial-gradient(circle at 50% 30%, #1e2a44, #0e0e12);
+            text-align: center;
+        }
+        .browser-home-logo {
+            font-size: clamp(28px, 4cqw, 64px);
+            font-weight: 700; letter-spacing: 0.05em;
+            background: linear-gradient(90deg, #8af, #4af, #a8f);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+        }
+        .browser-shortcuts {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 1.2cqw; max-width: 70cqw;
+        }
+        .browser-shortcut {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1cqh 1.4cqw;
+            color: #fff; text-decoration: none;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            cursor: pointer; transition: background 0.2s;
+        }
+        .browser-shortcut:hover { background: rgba(255, 255, 255, 0.14); }
+        .browser-hint {
+            color: #888; font-size: clamp(10px, 0.9cqw, 14px);
+            max-width: 60cqw; line-height: 1.6;
+        }
+
+        /* ───────────── FILE MANAGER ───────────── */
+        .files-wrap { display: flex; height: 100%; background: #1c1c1e; }
+        .files-sidebar {
+            width: clamp(110px, 13cqw, 200px);
+            background: #151517;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.4cqh 0.6cqw;
+            display: flex; flex-direction: column; gap: 0.3cqh;
+            overflow-y: auto; flex-shrink: 0;
+        }
+        .files-side-item {
+            display: flex; align-items: center; gap: 0.6cqw;
+            padding: 0.8cqh 0.9cqw; border-radius: 6px;
+            cursor: pointer; color: #ccc;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s;
+        }
+        .files-side-item:hover { background: rgba(255, 255, 255, 0.06); }
+        .files-side-item.active { background: rgba(138, 170, 255, 0.18); color: #fff; }
+
+        .files-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .files-toolbar {
+            display: flex; align-items: center; gap: 0.8cqw;
+            padding: 1cqh 1.2cqw;
+            background: #2a2a2e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+        .files-btn {
+            background: #3a3a3e; color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 0.7cqh 1cqw;
+            font-family: inherit; font-size: clamp(10px, 0.9cqw, 13px);
+            cursor: pointer; display: flex; align-items: center; gap: 0.4cqw;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .files-btn:hover { background: #4a4a52; }
+        .files-btn.primary { background: #8af; color: #001a33; font-weight: 700; }
+        .files-btn.primary:hover { background: #a8c4ff; }
+        .files-count { margin-left: auto; color: #888; font-size: clamp(9px, 0.8cqw, 12px); }
+        .files-area {
+            flex: 1; padding: 1.5cqh 1.2cqw;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(clamp(80px, 9cqw, 130px), 1fr));
+            gap: 1.4cqw; align-content: start;
+        }
+        .file-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 1.2cqh 0.6cqw;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 0.8cqh;
+            cursor: pointer; position: relative;
+            transition: background 0.15s, transform 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+        }
+        .file-card:hover { background: rgba(255, 255, 255, 0.09); transform: translateY(-2px); }
+        .file-thumb {
+            width: 100%; aspect-ratio: 1 / 1;
+            display: flex; align-items: center; justify-content: center;
+            background: #0e0e12; border-radius: 8px;
+            overflow: hidden;
+        }
+        .file-thumb img, .file-thumb video { width: 100%; height: 100%; object-fit: cover; }
+        .file-thumb .icon { font-size: clamp(28px, 3cqw, 48px); color: #8af; font-weight: 700; }
+        .file-name {
+            font-size: clamp(9px, 0.78cqw, 12px);
+            color: #ddd; text-align: center;
+            width: 100%; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .file-size { font-size: clamp(8px, 0.7cqw, 11px); color: #777; }
+        .file-del {
+            position: absolute; top: 5px; right: 5px;
+            width: 22px; height: 22px;
+            background: rgba(255, 59, 48, 0.85); color: #fff;
+            border: none; border-radius: 50%;
+            font-size: 13px; cursor: pointer;
+            display: none; align-items: center; justify-content: center;
+        }
+        .file-card:hover .file-del { display: flex; }
+        .files-empty {
+            grid-column: 1 / -1;
+            text-align: center; color: #666;
+            padding: 6cqh 2cqw;
+            font-size: clamp(11px, 1cqw, 15px);
+        }
+
+        .file-preview {
+            position: absolute; inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none; align-items: center; justify-content: center;
+            z-index: 200; padding: 3cqh 3cqw;
+            flex-direction: column; gap: 1.5cqh;
+        }
+        .file-preview.open { display: flex; }
+        .file-preview img, .file-preview video {
+            max-width: 100%; max-height: 70cqh;
+            border-radius: 8px; object-fit: contain;
+        }
+        .file-preview audio { width: 60cqw; }
+        .file-preview-title { color: #fff; font-size: clamp(12px, 1.1cqw, 16px); }
+        .file-preview-actions { display: flex; gap: 1cqw; }
+        .file-preview-actions a, .file-preview-actions button {
+            background: #8af; color: #001a33;
+            border: none; border-radius: 8px;
+            padding: 0.9cqh 1.6cqw;
+            font-family: inherit; font-weight: 700;
+            font-size: clamp(10px, 0.9cqw, 14px);
+            text-decoration: none; cursor: pointer;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        input, textarea, select, button { font-family: inherit; }
+        input { caret-color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="os-container">
+
+        <div class="wallpaper-layer" id="wallpaperLayerA"></div>
+        <div class="wallpaper-layer" id="wallpaperLayerB"></div>
+
+        <!-- BOOT MANAGER -->
+        <div id="bootManager" class="screen active">
+            <div class="top-label">kcnx/bootmanager/command_prompt/user:</div>
+            <div class="boot-text">
+                <span style="color:#aaa;">©</span> Web Operating Systems [Version and Model : 1.011.234.32143]
+                Keddlestone Cartes Normal Xendocial ~ 2026{|.html|.js|.css|.svg|\.library}.
+                All Rights Reserved.#$QCLN%20(Guidelines included)$.
+
+                Press/Type/Enter <span class="highlight">1</span> in windows to start...
+                Press/Type/Enter <span class="highlight">0</span> in windows to shutdown...
+
+                Press/Type/Enter <span class="highlight">2</span> in Andriod to power on...
+                Press/Type/Enter <span class="highlight">3</span> in Andriod to power off...
+
+                Press/Type/Enter on the apple keyboard in ios/mac to start up...
+                Press/Type/Enter on the iphone's screen to power shut off...
+            </div>
+            <div class="input-line">
+                <span>User|kcnx|:</span>
+                <input type="text" id="bootInput" maxlength="1" autofocus spellcheck="false" autocomplete="off" />
+                <span class="cursor-blink"></span>
+            </div>
+            <div id="cancelMsg" class="cancel-msg">✗ Cancel – invalid input</div>
+        </div>
+
+        <!-- BOOTING -->
+        <div id="bootingScreen" class="screen">
+            <div class="loader-wrap">
+                <div class="spinner"></div>
+                <div class="boot-status" id="bootStatus">Starting System ...</div>
+                <div class="download-progress" id="dlProgressWrap"><div class="bar" id="dlProgressBar"></div></div>
+                <div class="dl-status" id="dlStatus">⏳ loading wallpapers ...</div>
+            </div>
+        </div>
+
+        <!-- WELCOME -->
+        <div id="welcomeScreen" class="screen">
+            <video id="welcomeVideo" muted playsinline preload="auto"
+                src="https://res.cloudinary.com/ccmt3psw/video/upload/v1783926098/KCNX_WELCOME_INTRO_f4djcq.mp4"></video>
+        </div>
+
+        <!-- LOCK SCREEN -->
+        <div id="lockScreen" class="screen">
+            <div class="overlay" id="lockOverlay"></div>
+            <div class="lock-content">
+                <div class="lock-time" id="lockTime">--:--</div>
+                <div class="lock-date" id="lockDate">---</div>
+                <div class="lock-weather">
+                    <span class="temp" id="weatherTemp">92°F</span>
+                    <span class="condition" id="weatherCond">Sunny</span>
+                </div>
+            </div>
+            <button id="upArrow" class="bottom-up-arrow" aria-label="Open apps" type="button">
+                <img src="https://res.cloudinary.com/oo0zvalp/image/upload/v1790094509/up-arrow-svgrepo-com.svg" alt="" />
+            </button>
+            <button id="panelToggle" class="panel-toggle" aria-label="Toggle wallpaper panel" type="button">
+                <img src="https://res.cloudinary.com/oo0zvalp/image/upload/v1790093445/arrow-double-start-svgrepo-com.svg" alt="" />
+            </button>
+            <aside id="wallpaperPanel" class="wallpaper-panel" aria-label="Wallpaper selector">
+                <div class="panel-header">
+                    <img class="settings-icon"
+                        src="https://res.cloudinary.com/oo0zvalp/image/upload/v1790093445/settings-2-svgrepo-com.svg"
+                        alt="Settings" />
+                    <span class="panel-title">Wallpapers</span>
+                </div>
+                <div class="wallpaper-slots" id="wallpaperSlots"></div>
+            </aside>
+            <div id="swipeCatcher"></div>
+        </div>
+
+        <!-- HOME / APP DRAWER -->
+        <div id="homeScreen" class="home-screen">
+            <button id="dragHandle" class="drag-handle" aria-label="Close apps" type="button"></button>
+            <div class="apps-grid" id="appsGrid"></div>
+        </div>
+
+        <!-- KCNX MUSIC PLAYER -->
+        <div class="app-window" id="win-kcnxplayer">
+            <div class="window-titlebar">
+                <div class="window-title">🎵 KCNX Music Player</div>
+                <button class="window-close" data-close="win-kcnxplayer">✕</button>
+            </div>
+            <div class="window-body">
+                <div class="kcnx-player-wrap">
+                    <div class="kcnx-player-now">
+                        <div class="kcnx-player-art" id="kcnxPlayerArt">🎵</div>
+                        <div class="kcnx-player-info">
+                            <div class="kcnx-player-title" id="kcnxPlayerTitle">No track loaded</div>
+                            <div class="kcnx-player-sub" id="kcnxPlayerSub">Add music via File Manager →</div>
+                        </div>
+                    </div>
+
+                    <div class="kcnx-player-controls">
+                        <button class="kcnx-player-btn" id="kcnxPlayerPrev" aria-label="Previous">⏮</button>
+                        <button class="kcnx-player-btn big" id="kcnxPlayerPlay" aria-label="Play">▶</button>
+                        <button class="kcnx-player-btn" id="kcnxPlayerNext" aria-label="Next">⏭</button>
+                    </div>
+
+                    <div class="kcnx-player-progress">
+                        <span id="kcnxPlayerCur">0:00</span>
+                        <input type="range" id="kcnxPlayerSeek" min="0" max="1000" value="0" step="1" />
+                        <span id="kcnxPlayerDur">0:00</span>
+                    </div>
+
+                    <div class="kcnx-player-playlist" id="kcnxPlayerPlaylist">
+                        <div class="kcnx-player-playlist-header">Playlist</div>
+                        <div class="kcnx-player-empty">
+                            No music yet.<br>
+                            Open <strong>File Manager</strong> and upload audio files.
+                        </div>
+                    </div>
+
+                    <div class="kcnx-player-footer">
+                        <button class="kcnx-exit-btn" id="kcnxPlayerExit">
+                            <span class="power-icon">⏻</span> Exit Player
+                        </button>
+                    </div>
+                </div>
+                <audio id="kcnxAudio" preload="metadata"></audio>
+            </div>
+        </div>
+
+        <!-- CALCULATOR -->
+        <div class="app-window" id="win-calculator">
+            <div class="window-titlebar">
+                <div class="window-title">🧮 Calculator</div>
+                <button class="window-close" data-close="win-calculator">✕</button>
+            </div>
+            <div class="window-body">
+                <div class="calc-wrap">
+                    <div class="calc-display">
+                        <div class="calc-expr" id="calcExpr"></div>
+                        <div class="calc-result" id="calcResult">0</div>
+                    </div>
+                    <div class="calc-grid" id="calcGrid">
+                        <button class="calc-btn fn" data-k="C">C</button>
+                        <button class="calc-btn fn" data-k="⌫">⌫</button>
+                        <button class="calc-btn fn" data-k="%">%</button>
+                        <button class="calc-btn op" data-k="÷">÷</button>
+                        <button class="calc-btn" data-k="7">7</button>
+                        <button class="calc-btn" data-k="8">8</button>
+                        <button class="calc-btn" data-k="9">9</button>
+                        <button class="calc-btn op" data-k="×">×</button>
+                        <button class="calc-btn" data-k="4">4</button>
+                        <button class="calc-btn" data-k="5">5</button>
+                        <button class="calc-btn" data-k="6">6</button>
+                        <button class="calc-btn op" data-k="-">−</button>
+                        <button class="calc-btn" data-k="1">1</button>
+                        <button class="calc-btn" data-k="2">2</button>
+                        <button class="calc-btn" data-k="3">3</button>
+                        <button class="calc-btn op" data-k="+">+</button>
+                        <button class="calc-btn" data-k="±">±</button>
+                        <button class="calc-btn" data-k="0">0</button>
+                        <button class="calc-btn" data-k=".">.</button>
+                        <button class="calc-btn eq" data-k="=">=</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTEPAD -->
+        <div class="app-window" id="win-notepad">
+            <div class="window-titlebar">
+                <div class="window-title">📝 Notepad</div>
+                <button class="window-close" data-close="win-notepad">✕</button>
+            </div>
+            <div class="window-body">
+                <div class="notepad-wrap">
+                    <div class="notepad-menubar" id="notepadMenubar">
+                        <div class="notepad-menu" data-menu="file">File
+                            <div class="notepad-dropdown">
+                                <button data-act="new">New <span class="shortcut">Ctrl+N</span></button>
+                                <button data-act="open">Open… <span class="shortcut">Ctrl+O</span></button>
+                                <button data-act="save">Save <span class="shortcut">Ctrl+S</span></button>
+                                <button data-act="saveAs">Save As… <span class="shortcut">Ctrl+Shift+S</span></button>
+                                <div class="sep"></div>
+                                <button data-act="exit">Exit</button>
+                            </div>
+                        </div>
+                        <div class="notepad-menu" data-menu="edit">Edit
+                            <div class="notepad-dropdown">
+                                <button data-act="undo">Undo <span class="shortcut">Ctrl+Z</span></button>
+                                <button data-act="cut">Cut <span class="shortcut">Ctrl+X</span></button>
+                                <button data-act="copy">Copy <span class="shortcut">Ctrl+C</span></button>
+                                <button data-act="paste">Paste <span class="shortcut">Ctrl+V</span></button>
+                                <button data-act="del">Delete <span class="shortcut">Del</span></button>
+                                <div class="sep"></div>
+                                <button data-act="selectAll">Select All <span class="shortcut">Ctrl+A</span></button>
+                                <button data-act="timeDate">Time/Date <span class="shortcut">F5</span></button>
+                            </div>
+                        </div>
+                        <div class="notepad-menu" data-menu="format">Format
+                            <div class="notepad-dropdown">
+                                <button data-act="wrap">Word Wrap</button>
+                                <button data-act="font">Font…</button>
+                            </div>
+                        </div>
+                        <div class="notepad-menu" data-menu="view">View
+                            <div class="notepad-dropdown">
+                                <button data-act="zoomIn">Zoom In <span class="shortcut">Ctrl++</span></button>
+                                <button data-act="zoomOut">Zoom Out <span class="shortcut">Ctrl+-</span></button>
+                                <button data-act="zoomReset">Restore Default Zoom</button>
+                                <div class="sep"></div>
+                                <button data-act="statusbar">Status Bar</button>
+                            </div>
+                        </div>
+                        <div class="notepad-menu" data-menu="help">Help
+                            <div class="notepad-dropdown">
+                                <button data-act="about">About Notepad</button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea class="notepad-textarea" id="notepadText" spellcheck="false"></textarea>
+                    <div class="notepad-status">
+                        <span id="notepadPos">Ln 1, Col 1</span>
+                        <span id="notepadInfo">100%   UTF-8</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BROWSER -->
+        <div class="app-window" id="win-browser">
+            <div class="window-titlebar">
+                <div class="window-title">🌐 KCNX Browser</div>
+                <button class="window-close" data-close="win-browser">✕</button>
+            </div>
+            <div class="window-body">
+                <div class="browser-wrap">
+                    <div class="browser-toolbar">
+                        <select class="engine-select" id="browserEngine">
+                            <option value="ddg">DuckDuckGo</option>
+                            <option value="google">Google</option>
+                            <option value="bing">Bing</option>
+                            <option value="yandex">Yandex</option>
+                            <option value="brave">Brave</option>
+                        </select>
+                        <input type="text" class="browser-input" id="browserInput" placeholder="Search or type a URL…" />
+                        <button class="browser-go" id="browserGo">Go</button>
+                    </div>
+                    <div class="browser-home">
+                        <div class="browser-home-logo">KCNX Browser</div>
+                        <div class="browser-shortcuts" id="browserShortcuts"></div>
+                        <div class="browser-hint">
+                            Type a search query or a full URL, choose your engine, and press Go.<br>
+                            Results open in a new tab — this keeps the KCNX OS shell intact.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILE MANAGER -->
+        <div class="app-window" id="win-files">
+            <div class="window-titlebar">
+                <div class="window-title">📁 File Manager</div>
+                <button class="window-close" data-close="win-files">✕</button>
+            </div>
+            <div class="window-body">
+                <div class="files-wrap">
+                    <aside class="files-sidebar" id="filesSidebar">
+                        <div class="files-side-item active" data-cat="all">📂 All Files</div>
+                        <div class="files-side-item" data-cat="photos">🖼️ Photos</div>
+                        <div class="files-side-item" data-cat="videos">🎬 Videos</div>
+                        <div class="files-side-item" data-cat="music">🎵 Music</div>
+                        <div class="files-side-item" data-cat="documents">📄 Documents</div>
+                    </aside>
+                    <div class="files-main">
+                        <div class="files-toolbar">
+                            <button class="files-btn primary" id="filesUpload">⬆ Upload</button>
+                            <input type="file" id="filesInput" multiple style="display:none" />
+                            <span class="files-count" id="filesCount">0 files</span>
+                        </div>
+                        <div class="files-area" id="filesArea"></div>
+                    </div>
+                </div>
+                <div class="file-preview" id="filePreview">
+                    <div class="file-preview-title" id="filePreviewTitle"></div>
+                    <div id="filePreviewBody"></div>
+                    <div class="file-preview-actions">
+                        <a id="filePreviewDownload" download>⬇ Download</a>
+                        <button id="filePreviewClose">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // ═══════════════════════════════════════════
+        //  UTILITIES
+        // ═══════════════════════════════════════════
+        const $ = (id) => document.getElementById(id);
+        const $$ = (sel, root) => (root || document).querySelectorAll(sel);
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+        function fmtBytes(b) {
+            if (b < 1024) return b + ' B';
+            if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+            return (b / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+        function fmtTime(s) {
+            if (!isFinite(s) || s < 0) return '0:00';
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return m + ':' + String(sec).padStart(2, '0');
+        }
+        function svgDataUri(svg) {
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        }
+
+        // Inline SVG helpers (guaranteed to render — no CORS)
+        function letterIcon(bg, letter, size, color, extra) {
+            return svgDataUri(
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">` +
+                `<rect width="512" height="512" rx="112" fill="${bg}"/>` +
+                `<text x="256" y="256" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="${size}" fill="${color}" text-anchor="middle" dominant-baseline="central">${letter}</text>` +
+                (extra || '') +
+                `</svg>`
+            );
+        }
+        function iconTile(bg, inner) {
+            return svgDataUri(
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">` +
+                `<rect width="512" height="512" rx="112" fill="${bg}"/>` +
+                inner +
+                `</svg>`
+            );
+        }
+
+        // ═══════════════════════════════════════════
+        //  ICONS — all guaranteed to render
+        // ═══════════════════════════════════════════
+        const ICONS = {
+            // Simple Icons (confirmed working from screenshot)
+            youtube: 'https://cdn.simpleicons.org/youtube/FF0000',
+            netflix: 'https://cdn.simpleicons.org/netflix/E50914',
+            appletv: 'https://cdn.simpleicons.org/appletv/000000',
+            instagram: 'https://cdn.simpleicons.org/instagram/E4405F',
+            facebook: 'https://cdn.simpleicons.org/facebook/1877F2',
+            twitter: 'https://cdn.simpleicons.org/x/000000',
+            maps:    'https://cdn.simpleicons.org/googlemaps/4285F4',
+            spotify: 'https://cdn.simpleicons.org/spotify/1DB954',
+            whatsapp:'https://cdn.simpleicons.org/whatsapp/25D366',
+            gmail:   'https://cdn.simpleicons.org/gmail/EA4335',
+            gphotos: 'https://cdn.simpleicons.org/googlephotos/4285F4',
+            appstore:'https://cdn.simpleicons.org/appstore/0D96F6',
+            google:  'https://cdn.simpleicons.org/google/4285F4',
+            ddg:     'https://cdn.simpleicons.org/duckduckgo/DE5833',
+            brave:   'https://cdn.simpleicons.org/brave/FB542B',
+
+            // Previously broken — now inline SVG (always render)
+            bing:    letterIcon('#008373', 'b', 340, '#ffffff'),
+            yandex:  letterIcon('#FC3F1D', 'Y', 320, '#ffffff'),
+            zee5:    letterIcon('#8230C6', 'Z5', 220, '#ffffff'),
+            flipkart:letterIcon('#2874F0', 'F', 340, '#ffffff'),
+            outlook: letterIcon('#0078D4', 'O', 320, '#ffffff'),
+            amazon:  svgDataUri(
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">` +
+                `<rect width="512" height="512" rx="112" fill="#232F3E"/>` +
+                `<text x="256" y="220" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="240" fill="#fff" text-anchor="middle" dominant-baseline="central">a</text>` +
+                `<path d="M120 355 Q256 440 392 355" stroke="#FF9900" stroke-width="28" fill="none" stroke-linecap="round"/>` +
+                `</svg>`
+            ),
+
+            // KCNX internal apps (inline)
+            kcnxPlayer: iconTile('#ff6b35',
+                `<circle cx="256" cy="256" r="150" fill="none" stroke="#fff" stroke-width="22"/>` +
+                `<path d="M210 176 L360 256 L210 336 Z" fill="#fff"/>`),
+            kcnxMovies: iconTile('#e50914',
+                `<rect x="150" y="140" width="212" height="232" rx="22" fill="#fff"/>` +
+                `<circle cx="184" cy="176" r="14" fill="#e50914"/>` +
+                `<circle cx="184" cy="336" r="14" fill="#e50914"/>` +
+                `<circle cx="328" cy="176" r="14" fill="#e50914"/>` +
+                `<circle cx="328" cy="336" r="14" fill="#e50914"/>` +
+                `<path d="M224 200 L224 312 L316 256 Z" fill="#e50914"/>`),
+            calc: iconTile('#1c1c1e',
+                `<rect x="120" y="90" width="272" height="332" rx="26" fill="#fff"/>` +
+                `<rect x="146" y="120" width="220" height="70" rx="10" fill="#1c1c1e"/>` +
+                `<circle cx="182" cy="240" r="18" fill="#8af"/>` +
+                `<circle cx="256" cy="240" r="18" fill="#8af"/>` +
+                `<circle cx="330" cy="240" r="18" fill="#8af"/>` +
+                `<circle cx="182" cy="300" r="18" fill="#8af"/>` +
+                `<circle cx="256" cy="300" r="18" fill="#8af"/>` +
+                `<circle cx="330" cy="300" r="18" fill="#8af"/>` +
+                `<circle cx="182" cy="360" r="18" fill="#8af"/>` +
+                `<circle cx="256" cy="360" r="18" fill="#8af"/>` +
+                `<circle cx="330" cy="360" r="18" fill="#ff9f0a"/>`),
+            notepad: iconTile('#f5f5f5',
+                `<rect x="120" y="90" width="272" height="332" rx="20" fill="#fff" stroke="#d0d0d0" stroke-width="3"/>` +
+                `<rect x="150" y="130" width="212" height="10" rx="5" fill="#c8c8c8"/>` +
+                `<rect x="150" y="170" width="180" height="10" rx="5" fill="#c8c8c8"/>` +
+                `<rect x="150" y="210" width="200" height="10" rx="5" fill="#c8c8c8"/>` +
+                `<rect x="150" y="250" width="150" height="10" rx="5" fill="#c8c8c8"/>` +
+                `<rect x="150" y="290" width="190" height="10" rx="5" fill="#c8c8c8"/>` +
+                `<rect x="150" y="330" width="120" height="10" rx="5" fill="#c8c8c8"/>`),
+            browser: iconTile('#1e3a8a',
+                `<circle cx="256" cy="256" r="140" fill="none" stroke="#fff" stroke-width="18"/>` +
+                `<ellipse cx="256" cy="256" rx="60" ry="140" fill="none" stroke="#fff" stroke-width="14"/>` +
+                `<line x1="116" y1="256" x2="396" y2="256" stroke="#fff" stroke-width="14"/>` +
+                `<line x1="140" y1="186" x2="372" y2="186" stroke="#fff" stroke-width="12"/>` +
+                `<line x1="140" y1="326" x2="372" y2="326" stroke="#fff" stroke-width="12"/>`),
+            files: iconTile('#f6c945',
+                `<path d="M96 170 a26 26 0 0 1 26 -26 h84 l32 34 h154 a26 26 0 0 1 26 26 v152 a26 26 0 0 1 -26 26 H122 a26 26 0 0 1 -26 -26 Z" fill="#fff" stroke="#b58a00" stroke-width="8"/>` +
+                `<path d="M96 200 H416 V356 a26 26 0 0 1 -26 26 H122 a26 26 0 0 1 -26 -26 Z" fill="#fff"/>`)
+        };
+
+        // ═══════════════════════════════════════════
+        //  APPS LIST
+        // ═══════════════════════════════════════════
+        const APPS = [
+            { name: 'KCNX Player', icon: ICONS.kcnxPlayer, action: 'openKcnxPlayer' },
+            { name: 'KCNX Movies', icon: ICONS.kcnxMovies, url: 'https://kcnx5730.github.io/km/' },
+            { name: 'Calculator',  icon: ICONS.calc,     action: 'openCalc' },
+            { name: 'Notepad',     icon: ICONS.notepad,  action: 'openNotepad' },
+            { name: 'Browser',     icon: ICONS.browser,  action: 'openBrowser' },
+            { name: 'Files',       icon: ICONS.files,    action: 'openFiles' },
+            { name: 'Google',      icon: ICONS.google,   url: 'https://google.com' },
+            { name: 'Bing',        icon: ICONS.bing,     url: 'https://bing.com' },
+            { name: 'DuckDuckGo',  icon: ICONS.ddg,      url: 'https://duckduckgo.com' },
+            { name: 'Yandex',      icon: ICONS.yandex,   url: 'https://yandex.com' },
+            { name: 'Brave',       icon: ICONS.brave,    url: 'https://search.brave.com' },
+            { name: 'YouTube',     icon: ICONS.youtube,  url: 'https://youtube.com' },
+            { name: 'Netflix',     icon: ICONS.netflix,  url: 'https://netflix.com' },
+            { name: 'ZEE5',        icon: ICONS.zee5,     url: 'https://zee5.com' },
+            { name: 'Apple TV',    icon: ICONS.appletv,  url: 'https://tv.apple.com' },
+            { name: 'Spotify',     icon: ICONS.spotify,  url: 'https://spotify.com' },
+            { name: 'Instagram',   icon: ICONS.instagram,url: 'https://instagram.com' },
+            { name: 'Facebook',    icon: ICONS.facebook, url: 'https://facebook.com' },
+            { name: 'X',           icon: ICONS.twitter,  url: 'https://x.com' },
+            { name: 'WhatsApp',    icon: ICONS.whatsapp, url: 'https://web.whatsapp.com' },
+            { name: 'Amazon',      icon: ICONS.amazon,   url: 'https://amazon.com' },
+            { name: 'Flipkart',    icon: ICONS.flipkart, url: 'https://flipkart.com' },
+            { name: 'Maps',        icon: ICONS.maps,     url: 'https://maps.google.com' },
+            { name: 'Outlook',     icon: ICONS.outlook,  url: 'https://outlook.live.com' },
+            { name: 'Gmail',       icon: ICONS.gmail,    url: 'https://mail.google.com' },
+            { name: 'Photos',      icon: ICONS.gphotos,  url: 'https://photos.google.com' },
+            { name: 'App Store',   icon: ICONS.appstore, url: 'https://apps.apple.com' }
+        ];
+
+        // ═══════════════════════════════════════════
+        //  DOM
+        // ═══════════════════════════════════════════
+        const screens = {
+            bootManager: $('bootManager'),
+            booting: $('bootingScreen'),
+            welcome: $('welcomeScreen'),
+            lock: $('lockScreen'),
+        };
+        const bootInput = $('bootInput');
+        const cancelMsg = $('cancelMsg');
+        const bootStatus = $('bootStatus');
+        const lockTime = $('lockTime');
+        const lockDate = $('lockDate');
+        const weatherTemp = $('weatherTemp');
+        const weatherCond = $('weatherCond');
+        const welcomeVideo = $('welcomeVideo');
+        const lockOverlay = $('lockOverlay');
+        const swipeCatcher = $('swipeCatcher');
+        const dlProgressWrap = $('dlProgressWrap');
+        const dlProgressBar = $('dlProgressBar');
+        const dlStatus = $('dlStatus');
+        const wallpaperLayerA = $('wallpaperLayerA');
+        const wallpaperLayerB = $('wallpaperLayerB');
+        const wallpaperSlots = $('wallpaperSlots');
+        const panelToggle = $('panelToggle');
+        const wallpaperPanel = $('wallpaperPanel');
+        const homeScreen = $('homeScreen');
+        const upArrow = $('upArrow');
+        const appsGrid = $('appsGrid');
+        const dragHandle = $('dragHandle');
+
+        // ═══════════════════════════════════════════
+        //  CONSTANTS / STATE
+        // ═══════════════════════════════════════════
+        const WALLPAPERS = [
+            'https://res.cloudinary.com/oo0zvalp/image/upload/v1790092930/pexels-felix-mittermeier-957010.jpg',
+            'https://res.cloudinary.com/oo0zvalp/image/upload/v1790092917/pexels-eberhardgross-534164.jpg',
+            'https://res.cloudinary.com/oo0zvalp/image/upload/v1790092912/pexels-gije-19233481.jpg'
+        ];
+        const DEFAULT_WALLPAPER_INDEX = 1;
+        const STORAGE_KEY = 'kcnx_booted';
+        const WELCOME_KEY = 'kcnx_welcome_shown';
+        const WALLPAPER_KEY = 'kcnx_wallpaper_index';
+        const FILES_KEY = 'kcnx_files_v1';
+        const NOTES_KEY = 'kcnx_notepad_content';
+
+        let isBooted = localStorage.getItem(STORAGE_KEY) === 'true';
+        let currentScreen = 'bootManager';
+        let statusTimer = null;
+        let clockInterval = null;
+        let lockOverlayTimer = null;
+        let welcomeTimer = null;
+        let welcomeDone = false;
+        let panelOpen = false;
+        let homeOpen = false;
+        let activeWallpaperLayer = 'A';
+
+        let currentWallpaperIndex = (function() {
+            const saved = localStorage.getItem(WALLPAPER_KEY);
+            const n = saved !== null ? parseInt(saved, 10) : NaN;
+            return (!isNaN(n) && n >= 0 && n < WALLPAPERS.length) ? n : DEFAULT_WALLPAPER_INDEX;
+        })();
+
+        const statusSequence = [
+            { text: 'Starting System ...', delay: 400 },
+            { text: 'loading device preferences...', delay: 400 },
+            { text: 'checking versions', delay: 250 },
+            { text: 'checking kernel model', delay: 250 },
+            { text: 'setup-ing device', delay: 250 },
+        ];
+
+        function showScreen(id) {
+            Object.keys(screens).forEach(k => screens[k].classList.toggle('active', k === id));
+            currentScreen = id;
+        }
+
+        // ═══════════════════════════════════════════
+        //  BOOT MANAGER
+        // ═══════════════════════════════════════════
+        bootInput.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            const val = bootInput.value.trim();
+            const num = parseInt(val, 10);
+            if (!isNaN(num) && num >= 0 && num <= 3) {
+                cancelMsg.classList.remove('show');
+                startBooting();
+            } else {
+                cancelMsg.textContent = '✗ Cancel – invalid input (0–3 only)';
+                cancelMsg.classList.add('show');
+                bootInput.value = '';
+                bootInput.focus();
+                setTimeout(() => { cancelMsg.classList.remove('show'); startBooting(); }, 1200);
+            }
+        });
+        setTimeout(() => bootInput.focus(), 300);
+
+        // ═══════════════════════════════════════════
+        //  BOOTING
+        // ═══════════════════════════════════════════
+        function preloadWallpapers(onProgress, onComplete) {
+            let loaded = 0;
+            const total = WALLPAPERS.length;
+            WALLPAPERS.forEach(url => {
+                const img = new Image();
+                const done = () => {
+                    loaded++;
+                    if (onProgress) onProgress((loaded / total) * 100);
+                    if (loaded >= total && onComplete) onComplete();
+                };
+                img.onload = done;
+                img.onerror = done;
+                img.src = url;
+            });
+        }
+
+        function startBooting() {
+            if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
+            let index = 0;
+            showScreen('booting');
+            localStorage.setItem(STORAGE_KEY, 'true');
+            isBooted = true;
+
+            let preloadDone = false, statusDone = false;
+            function checkBothDone() {
+                if (preloadDone && statusDone) {
+                    bootStatus.textContent = '✓ System ready.';
+                    setTimeout(showWelcome, 500);
+                }
+            }
+            function updateStatus() {
+                if (index >= statusSequence.length) { statusDone = true; checkBothDone(); return; }
+                const entry = statusSequence[index];
+                bootStatus.textContent = entry.text;
+                statusTimer = setTimeout(() => { index++; updateStatus(); }, entry.delay);
+            }
+            dlProgressWrap.classList.add('show');
+            dlStatus.classList.add('show');
+            dlStatus.textContent = '⏳ loading wallpapers ...';
+            dlProgressBar.style.width = '0%';
+            preloadWallpapers(
+                pct => dlProgressBar.style.width = pct + '%',
+                () => {
+                    dlStatus.textContent = '✓ wallpapers ready';
+                    dlProgressBar.style.width = '100%';
+                    preloadDone = true;
+                    checkBothDone();
+                }
+            );
+            updateStatus();
+            setTimeout(() => {
+                if (!preloadDone) {
+                    preloadDone = true;
+                    dlStatus.textContent = '⚠️ timeout – proceeding';
+                    dlProgressBar.style.width = '100%';
+                    checkBothDone();
+                }
+            }, 15000);
+        }
+
+        // ═══════════════════════════════════════════
+        //  WELCOME
+        // ═══════════════════════════════════════════
+        function showWelcome() {
+            const alreadySeen = localStorage.getItem(WELCOME_KEY) === 'true';
+            if (alreadySeen || !welcomeVideo) { goToLock(); return; }
+            localStorage.setItem(WELCOME_KEY, 'true');
+            showScreen('welcome');
+            welcomeDone = false;
+            welcomeVideo.removeAttribute('loop');
+            welcomeVideo.muted = true;
+            welcomeVideo.playsInline = true;
+            try { welcomeVideo.currentTime = 0; } catch (e) {}
+            const finish = () => {
+                if (welcomeDone) return;
+                welcomeDone = true;
+                if (welcomeTimer) { clearTimeout(welcomeTimer); welcomeTimer = null; }
+                goToLock();
+            };
+            welcomeVideo.addEventListener('ended', finish, { once: true });
+            welcomeTimer = setTimeout(finish, 12000);
+            const p = welcomeVideo.play();
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+        }
+
+        function goToLock() {
+            if (currentScreen === 'lock') return;
+            try { welcomeVideo.pause(); } catch (e) {}
+            showScreen('lock');
+            applyWallpaper(WALLPAPERS[currentWallpaperIndex], true);
+            startClock();
+            showLockOverlay();
+            initSwipe();
+            initHomeSwipe();
+        }
+
+        function showLockOverlay() {
+            if (lockOverlayTimer) clearTimeout(lockOverlayTimer);
+            lockOverlay.classList.remove('visible');
+            lockOverlayTimer = setTimeout(() => lockOverlay.classList.add('visible'), 2000);
+        }
+
+        // ═══════════════════════════════════════════
+        //  CLOCK
+        // ═══════════════════════════════════════════
+        function startClock() {
+            if (clockInterval) clearInterval(clockInterval);
+            updateClockAndWeather();
+            clockInterval = setInterval(updateClockAndWeather, 1000);
+        }
+        function updateClockAndWeather() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            lockTime.textContent = h + ':' + m;
+            const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+            lockDate.textContent = now.toLocaleDateString('en-US', opts).toUpperCase();
+            weatherTemp.textContent = '92°F';
+            weatherCond.textContent = 'Sunny';
+        }
+
+        // ═══════════════════════════════════════════
+        //  WALLPAPER
+        // ═══════════════════════════════════════════
+        function buildWallpaperSlots() {
+            wallpaperSlots.innerHTML = '';
+            WALLPAPERS.forEach((url, i) => {
+                const slot = document.createElement('button');
+                slot.type = 'button';
+                slot.className = 'wallpaper-slot';
+                slot.dataset.index = String(i);
+                slot.style.backgroundImage = `url("${url}")`;
+                slot.setAttribute('aria-label', `Wallpaper ${i + 1}`);
+                slot.addEventListener('click', () => selectWallpaper(i));
+                wallpaperSlots.appendChild(slot);
+            });
+            updateActiveSlot();
+        }
+        function updateActiveSlot() {
+            wallpaperSlots.querySelectorAll('.wallpaper-slot').forEach((s, i) => {
+                s.classList.toggle('active', i === currentWallpaperIndex);
+            });
+        }
+        function applyWallpaper(url, instant) {
+            const currentL = activeWallpaperLayer === 'A' ? wallpaperLayerA : wallpaperLayerB;
+            const nextL = activeWallpaperLayer === 'A' ? wallpaperLayerB : wallpaperLayerA;
+            nextL.style.backgroundImage = `url("${url}")`;
+            if (instant) {
+                nextL.style.transition = 'none';
+                currentL.style.transition = 'none';
+                nextL.style.opacity = '1';
+                currentL.style.opacity = '0';
+                void nextL.offsetWidth;
+                nextL.style.transition = '';
+                currentL.style.transition = '';
+            } else {
+                nextL.style.opacity = '1';
+                currentL.style.opacity = '0';
+            }
+            activeWallpaperLayer = activeWallpaperLayer === 'A' ? 'B' : 'A';
+        }
+        function selectWallpaper(index) {
+            if (index === currentWallpaperIndex) return;
+            currentWallpaperIndex = index;
+            try { localStorage.setItem(WALLPAPER_KEY, String(index)); } catch (e) {}
+            applyWallpaper(WALLPAPERS[index], false);
+            updateActiveSlot();
+        }
+
+        // ═══════════════════════════════════════════
+        //  PANEL
+        // ═══════════════════════════════════════════
+        function openPanel() { if (panelOpen) return; panelOpen = true; wallpaperPanel.classList.add('open'); panelToggle.classList.add('open'); }
+        function closePanel() { if (!panelOpen) return; panelOpen = false; wallpaperPanel.classList.remove('open'); panelToggle.classList.remove('open'); }
+        panelToggle.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            panelOpen ? closePanel() : openPanel();
+        });
+
+        // ═══════════════════════════════════════════
+        //  HOME / APP DRAWER
+        // ═══════════════════════════════════════════
+        function openHome() { if (homeOpen) return; closePanel(); homeOpen = true; homeScreen.classList.add('open'); }
+        function closeHome() { if (!homeOpen) return; homeOpen = false; homeScreen.classList.remove('open'); }
+
+        upArrow.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openHome(); });
+        // Drag handle closes the drawer
+        dragHandle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeHome(); });
+
+        function buildAppsGrid() {
+            appsGrid.innerHTML = '';
+            APPS.forEach(app => {
+                const tile = document.createElement('a');
+                tile.className = 'app-tile';
+                tile.href = 'javascript:void(0)';
+                tile.innerHTML =
+                    `<div class="app-icon" style="background:${app.bg || '#fff'}">` +
+                    `<img src="${app.icon}" alt="${escapeHtml(app.name)}" draggable="false" />` +
+                    `</div>` +
+                    `<span class="app-name">${escapeHtml(app.name)}</span>`;
+
+                tile.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (app.action) AppActions[app.action]();
+                    else if (app.url) window.open(app.url, '_blank', 'noopener');
+                });
+                appsGrid.appendChild(tile);
+            });
+        }
+
+        // ═══════════════════════════════════════════
+        //  SWIPE (lock screen)
+        // ═══════════════════════════════════════════
+        let swipeStartX = 0, swipeStartY = 0, swipeActive = false;
+        let mouseDown = false, mouseStartX = 0, mouseStartY = 0;
+        let swipeInited = false;
+        function initSwipe() {
+            if (swipeInited) return;
+            swipeInited = true;
+            swipeCatcher.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                swipeStartX = t.clientX; swipeStartY = t.clientY; swipeActive = true;
+            }, { passive: true });
+            swipeCatcher.addEventListener('touchmove', (e) => {
+                if (!swipeActive) return;
+                const t = e.touches[0];
+                const dx = t.clientX - swipeStartX;
+                const dy = t.clientY - swipeStartY;
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx < -60) { swipeActive = false; openPanel(); }
+                    else if (dx > 60) { swipeActive = false; closePanel(); }
+                } else {
+                    if (dy < -60) { swipeActive = false; openHome(); }
+                }
+            }, { passive: true });
+            swipeCatcher.addEventListener('touchend', () => { swipeActive = false; }, { passive: true });
+
+            swipeCatcher.addEventListener('mousedown', (e) => {
+                mouseDown = true; mouseStartX = e.clientX; mouseStartY = e.clientY;
+            });
+            swipeCatcher.addEventListener('mousemove', (e) => {
+                if (!mouseDown) return;
+                const dx = e.clientX - mouseStartX;
+                const dy = e.clientY - mouseStartY;
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx < -60) { mouseDown = false; openPanel(); }
+                    else if (dx > 60) { mouseDown = false; closePanel(); }
+                } else {
+                    if (dy < -60) { mouseDown = false; openHome(); }
+                }
+            });
+            swipeCatcher.addEventListener('mouseup', () => { mouseDown = false; });
+        }
+
+        // ═══════════════════════════════════════════
+        //  HOME SWIPE DOWN
+        // ═══════════════════════════════════════════
+        let homeSwipeInited = false;
+        function initHomeSwipe() {
+            if (homeSwipeInited) return;
+            homeSwipeInited = true;
+
+            let hsY = 0, hActive = false;
+            let hmDown = false, hmStartY = 0;
+
+            homeScreen.addEventListener('touchstart', (e) => {
+                hsY = e.touches[0].clientY; hActive = true;
+            }, { passive: true });
+            homeScreen.addEventListener('touchmove', (e) => {
+                if (!hActive) return;
+                if (e.touches[0].clientY - hsY > 60) { hActive = false; closeHome(); }
+            }, { passive: true });
+            homeScreen.addEventListener('touchend', () => { hActive = false; }, { passive: true });
+
+            homeScreen.addEventListener('mousedown', (e) => {
+                if (e.target === dragHandle || dragHandle.contains(e.target)) return;
+                hmDown = true; hmStartY = e.clientY;
+            });
+            homeScreen.addEventListener('mousemove', (e) => {
+                if (!hmDown) return;
+                if (e.clientY - hmStartY > 60) { hmDown = false; closeHome(); }
+            });
+            homeScreen.addEventListener('mouseup', () => { hmDown = false; });
+        }
+
+        // ═══════════════════════════════════════════
+        //  WINDOW MANAGER
+        // ═══════════════════════════════════════════
+        function openWindow(id) {
+            closeAllWindows();
+            const w = document.getElementById(id);
+            if (w) w.classList.add('open');
+        }
+        function closeWindow(id) {
+            const w = document.getElementById(id);
+            if (w) w.classList.remove('open');
+            if (id === 'win-kcnxplayer') KcnxPlayer.stop();
+        }
+        function closeAllWindows() {
+            $$('.app-window').forEach(w => {
+                if (w.id === 'win-kcnxplayer' && w.classList.contains('open')) KcnxPlayer.stop();
+                w.classList.remove('open');
+            });
+        }
+        $$('.window-close').forEach(btn => {
+            btn.addEventListener('click', () => closeWindow(btn.dataset.close));
+        });
+
+        // ═══════════════════════════════════════════
+        //  KCNX MUSIC PLAYER
+        // ═══════════════════════════════════════════
+        const KcnxPlayer = {
+            audio: null,
+            playlist: [],
+            currentIndex: -1,
+            isPlaying: false,
+            inited: false,
+
+            init() {
+                if (this.inited) return;
+                this.inited = true;
+                this.audio = $('kcnxAudio');
+
+                $('kcnxPlayerPlay').addEventListener('click', () => this.togglePlay());
+                $('kcnxPlayerPrev').addEventListener('click', () => this.prev());
+                $('kcnxPlayerNext').addEventListener('click', () => this.next());
+                $('kcnxPlayerExit').addEventListener('click', () => closeWindow('win-kcnxplayer'));
+
+                const seek = $('kcnxPlayerSeek');
+                seek.addEventListener('input', () => {
+                    if (!this.audio.duration) return;
+                    const t = (seek.value / 1000) * this.audio.duration;
+                    this.audio.currentTime = t;
+                });
+
+                this.audio.addEventListener('timeupdate', () => this.updateProgress());
+                this.audio.addEventListener('loadedmetadata', () => this.updateProgress());
+                this.audio.addEventListener('ended', () => this.next());
+                this.audio.addEventListener('play', () => {
+                    this.isPlaying = true;
+                    $('kcnxPlayerPlay').textContent = '⏸';
+                });
+                this.audio.addEventListener('pause', () => {
+                    this.isPlaying = false;
+                    $('kcnxPlayerPlay').textContent = '▶';
+                });
+            },
+
+            refreshFromFiles() {
+                const music = FileManager.files.filter(f => f.category === 'music');
+                this.playlist = music;
+                this.renderPlaylist();
+                if (this.currentIndex >= this.playlist.length) this.currentIndex = -1;
+            },
+
+            renderPlaylist() {
+                const wrap = $('kcnxPlayerPlaylist');
+                if (!this.playlist.length) {
+                    wrap.innerHTML =
+                        '<div class="kcnx-player-playlist-header">Playlist</div>' +
+                        '<div class="kcnx-player-empty">' +
+                        'No music yet.<br>' +
+                        'Open <strong>File Manager</strong> and upload audio files.' +
+                        '</div>';
+                    return;
+                }
+                let html = '<div class="kcnx-player-playlist-header">Playlist · ' +
+                    this.playlist.length + ' track' + (this.playlist.length === 1 ? '' : 's') + '</div>';
+                this.playlist.forEach((f, i) => {
+                    const isCur = i === this.currentIndex;
+                    html +=
+                        `<div class="kcnx-track ${isCur ? 'playing' : ''}" data-index="${i}">` +
+                        `<span class="kcnx-track-num">${isCur ? '▶' : (i + 1)}</span>` +
+                        `<span class="kcnx-track-name">${escapeHtml(f.name)}</span>` +
+                        `<span class="kcnx-track-size">${fmtBytes(f.size)}</span>` +
+                        `</div>`;
+                });
+                wrap.innerHTML = html;
+                wrap.querySelectorAll('.kcnx-track').forEach(t => {
+                    t.addEventListener('click', () => this.playIndex(parseInt(t.dataset.index, 10)));
+                });
+            },
+
+            open() {
+                this.init();
+                this.refreshFromFiles();
+                openWindow('win-kcnxplayer');
+            },
+
+            playIndex(i) {
+                if (i < 0 || i >= this.playlist.length) return;
+                const f = this.playlist[i];
+                this.currentIndex = i;
+                this.audio.src = f.dataUrl;
+                this.audio.play().catch(() => {});
+                $('kcnxPlayerTitle').textContent = f.name;
+                $('kcnxPlayerSub').textContent = fmtBytes(f.size) + ' · Local file';
+                // Try to detect metadata
+                $('kcnxPlayerArt').innerHTML = '🎵';
+                this.renderPlaylist();
+            },
+
+            togglePlay() {
+                if (!this.audio.src) {
+                    if (this.playlist.length) this.playIndex(0);
+                    return;
+                }
+                if (this.audio.paused) this.audio.play().catch(() => {});
+                else this.audio.pause();
+            },
+
+            prev() {
+                if (!this.playlist.length) return;
+                let i = this.currentIndex - 1;
+                if (i < 0) i = this.playlist.length - 1;
+                this.playIndex(i);
+            },
+
+            next() {
+                if (!this.playlist.length) return;
+                let i = this.currentIndex + 1;
+                if (i >= this.playlist.length) i = 0;
+                this.playIndex(i);
+            },
+
+            updateProgress() {
+                const a = this.audio;
+                const cur = a.currentTime || 0;
+                const dur = a.duration || 0;
+                $('kcnxPlayerCur').textContent = fmtTime(cur);
+                $('kcnxPlayerDur').textContent = fmtTime(dur);
+                if (dur > 0) {
+                    $('kcnxPlayerSeek').value = String(Math.round((cur / dur) * 1000));
+                }
+            },
+
+            stop() {
+                if (!this.audio) return;
+                try { this.audio.pause(); } catch (e) {}
+                try { this.audio.currentTime = 0; } catch (e) {}
+            }
+        };
+
+        // ═══════════════════════════════════════════
+        //  CALCULATOR
+        // ═══════════════════════════════════════════
+        const Calculator = {
+            expr: '', result: '0',
+            init() {
+                $('calcGrid').addEventListener('click', (e) => {
+                    const btn = e.target.closest('.calc-btn');
+                    if (btn) this.press(btn.dataset.k);
+                });
+            },
+            press(k) {
+                if (k === 'C') { this.expr = ''; this.result = '0'; }
+                else if (k === '⌫') { this.expr = this.expr.slice(0, -1); this.evaluateLive(); }
+                else if (k === '=') { this.compute(); }
+                else if (k === '±') {
+                    const m = this.expr.match(/(-?\d*\.?\d+)$/);
+                    if (m) {
+                        const n = m[1];
+                        const idx = this.expr.length - n.length;
+                        this.expr = this.expr.slice(0, idx) + (n.startsWith('-') ? n.slice(1) : '-' + n);
+                    } else if (!this.expr) this.expr = '-';
+                }
+                else if (k === '%') {
+                    const m = this.expr.match(/(-?\d*\.?\d+)$/);
+                    if (m) {
+                        const n = parseFloat(m[1]);
+                        const idx = this.expr.length - m[1].length;
+                        this.expr = this.expr.slice(0, idx) + (n / 100);
+                    }
+                }
+                else if (['+', '-', '×', '÷'].includes(k)) {
+                    if (this.expr === '' && k === '-') this.expr = '-';
+                    else {
+                        if (/[+\-×÷]$/.test(this.expr)) this.expr = this.expr.slice(0, -1);
+                        this.expr += k;
+                    }
+                    this.evaluateLive();
+                }
+                else if (k === '.') {
+                    const m = this.expr.match(/(-?\d*\.?\d*)$/);
+                    if (m && !m[1].includes('.')) {
+                        if (!m[1]) this.expr += '0.';
+                        else this.expr += '.';
+                    } else if (!m) this.expr += '0.';
+                }
+                else if (/[0-9]/.test(k)) { this.expr += k; this.evaluateLive(); }
+                this.render();
+            },
+            evaluateLive() {
+                try {
+                    const clean = this.expr.replace(/×/g, '*').replace(/÷/g, '/');
+                    if (!clean || /[+\-*/.]$/.test(clean)) return;
+                    const val = Function('"use strict";return (' + clean + ')')();
+                    if (val !== undefined && isFinite(val)) this.result = this.formatResult(val);
+                } catch (e) {}
+            },
+            compute() {
+                try {
+                    const clean = this.expr.replace(/×/g, '*').replace(/÷/g, '/');
+                    if (!clean) return;
+                    const val = Function('"use strict";return (' + clean + ')')();
+                    if (val === undefined || !isFinite(val)) { this.result = 'Error'; return; }
+                    this.result = this.formatResult(val);
+                    this.expr = String(val);
+                } catch (e) { this.result = 'Error'; }
+            },
+            formatResult(v) {
+                if (Math.abs(v) > 1e12 || (Math.abs(v) < 1e-6 && v !== 0)) return v.toExponential(6);
+                return String(Math.round(v * 1e10) / 1e10);
+            },
+            render() {
+                $('calcExpr').textContent = this.expr || '';
+                $('calcResult').textContent = this.expr ? this.result : '0';
+            },
+            handleKey(e) {
+                if (!$('win-calculator').classList.contains('open')) return;
+                const k = e.key;
+                if (/^[0-9]$/.test(k)) { this.press(k); e.preventDefault(); }
+                else if (k === '+' || k === '-') { this.press(k); e.preventDefault(); }
+                else if (k === '*') { this.press('×'); e.preventDefault(); }
+                else if (k === '/') { this.press('÷'); e.preventDefault(); }
+                else if (k === '.' || k === ',') { this.press('.'); e.preventDefault(); }
+                else if (k === 'Enter' || k === '=') { this.press('='); e.preventDefault(); }
+                else if (k === 'Backspace') { this.press('⌫'); e.preventDefault(); }
+                else if (k === 'Escape' || k === 'Delete') { this.press('C'); e.preventDefault(); }
+                else if (k === '%') { this.press('%'); e.preventDefault(); }
+            }
+        };
+
+        // ═══════════════════════════════════════════
+        //  NOTEPAD
+        // ═══════════════════════════════════════════
+        const Notepad = {
+            textarea: null,
+            init() {
+                this.textarea = $('notepadText');
+                try {
+                    const saved = localStorage.getItem(NOTES_KEY);
+                    if (saved !== null) this.textarea.value = saved;
+                } catch (e) {}
+                this.textarea.addEventListener('input', () => this.saveSilently());
+
+                const menus = $$('.notepad-menu');
+                menus.forEach(m => {
+                    m.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const wasOpen = m.classList.contains('open');
+                        menus.forEach(mm => mm.classList.remove('open'));
+                        if (!wasOpen) m.classList.add('open');
+                    });
+                });
+                document.addEventListener('click', () => menus.forEach(m => m.classList.remove('open')));
+
+                $('notepadMenubar').addEventListener('click', (e) => {
+                    const btn = e.target.closest('[data-act]');
+                    if (!btn) return;
+                    e.stopPropagation();
+                    this.action(btn.dataset.act);
+                    menus.forEach(m => m.classList.remove('open'));
+                });
+
+                ['keyup', 'click', 'input'].forEach(ev => {
+                    this.textarea.addEventListener(ev, () => this.updatePos());
+                });
+                this.updatePos();
+            },
+            updatePos() {
+                const ta = this.textarea;
+                const pos = ta.selectionStart;
+                const upto = ta.value.slice(0, pos);
+                const lines = upto.split('\n');
+                $('notepadPos').textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
+            },
+            saveSilently() {
+                try { localStorage.setItem(NOTES_KEY, this.textarea.value); } catch (e) {}
+            },
+            action(a) {
+                const ta = this.textarea;
+                if (a === 'new') {
+                    if (ta.value && !confirm('Discard current text and start new?')) return;
+                    ta.value = ''; this.saveSilently();
+                } else if (a === 'open') {
+                    const inp = document.createElement('input');
+                    inp.type = 'file'; inp.accept = '.txt,text/plain';
+                    inp.onchange = () => {
+                        const f = inp.files[0];
+                        if (!f) return;
+                        const r = new FileReader();
+                        r.onload = () => { ta.value = r.result; this.saveSilently(); };
+                        r.readAsText(f);
+                    };
+                    inp.click();
+                } else if (a === 'save' || a === 'saveAs') {
+                    const blob = new Blob([ta.value], { type: 'text/plain' });
+                    const a2 = document.createElement('a');
+                    a2.href = URL.createObjectURL(blob);
+                    a2.download = 'KCNX-Notepad.txt';
+                    a2.click();
+                    setTimeout(() => URL.revokeObjectURL(a2.href), 1000);
+                } else if (a === 'exit') closeWindow('win-notepad');
+                else if (a === 'undo') document.execCommand('undo');
+                else if (a === 'cut') {
+                    const s = ta.selectionStart, e2 = ta.selectionEnd;
+                    if (s !== e2) navigator.clipboard.writeText(ta.value.slice(s, e2));
+                    ta.setRangeText('', s, e2, 'end'); this.saveSilently();
+                } else if (a === 'copy') {
+                    const s = ta.selectionStart, e2 = ta.selectionEnd;
+                    if (s !== e2) navigator.clipboard.writeText(ta.value.slice(s, e2));
+                } else if (a === 'paste') {
+                    navigator.clipboard.readText().then(txt => {
+                        const s = ta.selectionStart, e2 = ta.selectionEnd;
+                        ta.setRangeText(txt, s, e2, 'end'); this.saveSilently();
+                    }).catch(() => {});
+                } else if (a === 'del') {
+                    const s = ta.selectionStart, e2 = ta.selectionEnd;
+                    ta.setRangeText('', s, e2, 'end'); this.saveSilently();
+                } else if (a === 'selectAll') ta.select();
+                else if (a === 'timeDate') {
+                    const d = new Date();
+                    const s = d.toLocaleTimeString() + ' ' + d.toLocaleDateString();
+                    const p = ta.selectionStart;
+                    ta.setRangeText(s, p, p, 'end'); this.saveSilently();
+                } else if (a === 'wrap') {
+                    ta.style.whiteSpace = ta.style.whiteSpace === 'pre' ? 'pre-wrap' : 'pre';
+                } else if (a === 'zoomIn' || a === 'zoomOut' || a === 'zoomReset') {
+                    const cur = parseFloat(ta.dataset.zoom || '100');
+                    let next = cur;
+                    if (a === 'zoomIn') next = Math.min(200, cur + 10);
+                    if (a === 'zoomOut') next = Math.max(60, cur - 10);
+                    if (a === 'zoomReset') next = 100;
+                    ta.dataset.zoom = next;
+                    ta.style.fontSize = `clamp(9px, ${1.05 * (next / 100)}cqw, ${24 * (next / 100)}px)`;
+                    $('notepadInfo').textContent = `${next}%   UTF-8`;
+                } else if (a === 'statusbar') {
+                    ['notepadPos', 'notepadInfo'].forEach(id => {
+                        const el = $(id);
+                        el.style.visibility = el.style.visibility === 'hidden' ? '' : 'hidden';
+                    });
+                } else if (a === 'about') {
+                    alert('KCNX Notepad\nA simple in-OS text editor.\nSaves automatically to localStorage.');
+                } else if (a === 'font') {
+                    const size = prompt('Font size in px (10–40):', '15');
+                    if (size) ta.style.fontSize = size + 'px';
+                }
+            }
+        };
+
+        // ═══════════════════════════════════════════
+        //  BROWSER
+        // ═══════════════════════════════════════════
+        const Browser = {
+            engines: {
+                ddg:    { url: 'https://duckduckgo.com/?q=' },
+                google: { url: 'https://www.google.com/search?q=' },
+                bing:   { url: 'https://www.bing.com/search?q=' },
+                yandex: { url: 'https://yandex.com/search/?text=' },
+                brave:  { url: 'https://search.brave.com/search?q=' }
+            },
+            shortcuts: [
+                { name: 'YouTube', url: 'https://youtube.com' },
+                { name: 'Wikipedia', url: 'https://wikipedia.org' },
+                { name: 'Reddit', url: 'https://reddit.com' },
+                { name: 'GitHub', url: 'https://github.com' },
+                { name: 'Stack Overflow', url: 'https://stackoverflow.com' },
+                { name: 'Gmail', url: 'https://mail.google.com' }
+            ],
+            init() {
+                $('browserGo').addEventListener('click', () => this.go());
+                $('browserInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') this.go();
+                });
+                const wrap = $('browserShortcuts');
+                wrap.innerHTML = '';
+                this.shortcuts.forEach(s => {
+                    const a = document.createElement('a');
+                    a.className = 'browser-shortcut';
+                    a.textContent = s.name;
+                    a.href = 'javascript:void(0)';
+                    a.addEventListener('click', () => window.open(s.url, '_blank', 'noopener'));
+                    wrap.appendChild(a);
+                });
+            },
+            go() {
+                const q = $('browserInput').value.trim();
+                if (!q) return;
+                const engine = this.engines[$('browserEngine').value] || this.engines.ddg;
+                let target;
+                if (/^https?:\/\//i.test(q)) target = q;
+                else if (/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(q)) target = 'https://' + q;
+                else target = engine.url + encodeURIComponent(q);
+                window.open(target, '_blank', 'noopener');
+            }
+        };
+
+        // ═══════════════════════════════════════════
+        //  FILE MANAGER
+        // ═══════════════════════════════════════════
+        const FileManager = {
+            files: [],
+            currentCat: 'all',
+            init() {
+                try {
+                    const raw = localStorage.getItem(FILES_KEY);
+                    if (raw) this.files = JSON.parse(raw) || [];
+                } catch (e) { this.files = []; }
+
+                $('filesUpload').addEventListener('click', () => $('filesInput').click());
+                $('filesInput').addEventListener('change', (e) => this.handleUpload(e.target.files));
+
+                $$('.files-side-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        $$('.files-side-item').forEach(x => x.classList.remove('active'));
+                        item.classList.add('active');
+                        this.currentCat = item.dataset.cat;
+                        this.render();
+                    });
+                });
+                $('filePreviewClose').addEventListener('click', () => this.closePreview());
+                this.render();
+            },
+            categorize(mime, name) {
+                if (!mime) mime = '';
+                if (mime.startsWith('image/')) return 'photos';
+                if (mime.startsWith('video/')) return 'videos';
+                if (mime.startsWith('audio/')) return 'music';
+                if (mime.startsWith('text/') || /\.(pdf|docx?|xlsx?|pptx?|txt|md)$/i.test(name)) return 'documents';
+                return 'other';
+            },
+            handleUpload(fileList) {
+                const files = Array.from(fileList || []);
+                if (!files.length) return;
+                let remaining = files.length;
+                const finish = () => {
+                    if (--remaining === 0) {
+                        this.save(); this.render();
+                        if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
+                    }
+                };
+                files.forEach(f => {
+                    if (f.size > 4 * 1024 * 1024) {
+                        alert(`"${f.name}" is larger than 4 MB and may exceed localStorage quota. Skipping.`);
+                        finish(); return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        this.files.push({
+                            id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                            name: f.name,
+                            type: f.type || 'application/octet-stream',
+                            category: this.categorize(f.type, f.name),
+                            size: f.size,
+                            date: Date.now(),
+                            dataUrl: reader.result
+                        });
+                        finish();
+                    };
+                    reader.onerror = () => finish();
+                    reader.readAsDataURL(f);
+                });
+            },
+            save() {
+                try { localStorage.setItem(FILES_KEY, JSON.stringify(this.files)); }
+                catch (e) { alert('Storage quota exceeded. Try deleting some files.'); }
+            },
+            deleteFile(id) {
+                if (!confirm('Delete this file permanently?')) return;
+                this.files = this.files.filter(f => f.id !== id);
+                this.save(); this.render();
+                if ($('win-kcnxplayer').classList.contains('open')) KcnxPlayer.refreshFromFiles();
+            },
+            render() {
+                const area = $('filesArea');
+                const list = this.currentCat === 'all'
+                    ? this.files
+                    : this.files.filter(f => f.category === this.currentCat);
+                $('filesCount').textContent = `${list.length} file${list.length === 1 ? '' : 's'}`;
+                if (!list.length) {
+                    area.innerHTML = '<div class="files-empty">No files here yet. Click ⬆ Upload to add files.</div>';
+                    return;
+                }
+                area.innerHTML = '';
+                list.slice().reverse().forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    let thumb = '';
+                    if (f.category === 'photos') thumb = `<img src="${f.dataUrl}" alt="" />`;
+                    else if (f.category === 'videos') thumb = `<video src="${f.dataUrl}" muted preload="metadata"></video>`;
+                    else if (f.category === 'music') thumb = `<div class="icon">♪</div>`;
+                    else if (f.category === 'documents') thumb = `<div class="icon">📄</div>`;
+                    else thumb = `<div class="icon">📦</div>`;
+
+                    card.innerHTML =
+                        `<button class="file-del" title="Delete">✕</button>` +
+                        `<div class="file-thumb">${thumb}</div>` +
+                        `<div class="file-name">${escapeHtml(f.name)}</div>` +
+                        `<div class="file-size">${fmtBytes(f.size)}</div>`;
+                    card.querySelector('.file-del').addEventListener('click', (e) => {
+                        e.stopPropagation(); this.deleteFile(f.id);
+                    });
+                    card.addEventListener('click', () => this.openPreview(f));
+                    area.appendChild(card);
+                });
+            },
+            openPreview(f) {
+                // Music files open in KCNX Player instead of the modal
+                if (f.category === 'music') {
+                    closeAllWindows();
+                    KcnxPlayer.init();
+                    KcnxPlayer.refreshFromFiles();
+                    openWindow('win-kcnxplayer');
+                    const idx = KcnxPlayer.playlist.findIndex(x => x.id === f.id);
+                    if (idx >= 0) KcnxPlayer.playIndex(idx);
+                    return;
+                }
+                const p = $('filePreview');
+                $('filePreviewTitle').textContent = f.name;
+                const body = $('filePreviewBody');
+                body.innerHTML = '';
+                if (f.category === 'photos') {
+                    const img = document.createElement('img');
+                    img.src = f.dataUrl; body.appendChild(img);
+                } else if (f.category === 'videos') {
+                    const v = document.createElement('video');
+                    v.src = f.dataUrl; v.controls = true; v.autoplay = true;
+                    body.appendChild(v);
+                } else if (f.category === 'documents' && f.type.startsWith('text/')) {
+                    const pre = document.createElement('pre');
+                    pre.style.cssText = 'color:#fff;background:#111;padding:1.5cqh 1.5cqw;border-radius:8px;max-width:80cqw;max-height:55cqh;overflow:auto;white-space:pre-wrap;font-size:clamp(11px,1cqw,15px);';
+                    try {
+                        const b64 = f.dataUrl.split(',')[1];
+                        pre.textContent = decodeURIComponent(escape(atob(b64)));
+                    } catch (e) { pre.textContent = '(binary content)'; }
+                    body.appendChild(pre);
+                } else {
+                    body.innerHTML = '<div style="color:#ccc;">No inline preview available for this file.</div>';
+                }
+                const dl = $('filePreviewDownload');
+                dl.href = f.dataUrl; dl.download = f.name;
+                p.classList.add('open');
+            },
+            closePreview() {
+                $('filePreview').classList.remove('open');
+                $('filePreviewBody').innerHTML = '';
+            }
+        };
+
+        // ═══════════════════════════════════════════
+        //  APP ACTIONS
+        // ═══════════════════════════════════════════
+        const AppActions = {
+            openKcnxPlayer: () => KcnxPlayer.open(),
+            openCalc:       () => openWindow('win-calculator'),
+            openNotepad:    () => openWindow('win-notepad'),
+            openBrowser:    () => openWindow('win-browser'),
+            openFiles:      () => openWindow('win-files'),
+        };
+
+        // ═══════════════════════════════════════════
+        //  GLOBAL KEYBOARD
+        // ═══════════════════════════════════════════
+        document.addEventListener('keydown', (e) => {
+            Calculator.handleKey(e);
+
+            if ($('win-notepad').classList.contains('open')) {
+                const ctrl = e.ctrlKey || e.metaKey;
+                if (ctrl && e.key.toLowerCase() === 's') { e.preventDefault(); Notepad.action(e.shiftKey ? 'saveAs' : 'save'); }
+                if (ctrl && e.key.toLowerCase() === 'o') { e.preventDefault(); Notepad.action('open'); }
+                if (ctrl && e.key.toLowerCase() === 'n') { e.preventDefault(); Notepad.action('new'); }
+                if (ctrl && e.key.toLowerCase() === 'a') { e.preventDefault(); Notepad.action('selectAll'); }
+                if (e.key === 'F5') { e.preventDefault(); Notepad.action('timeDate'); }
+            }
+
+            if (e.key === 'Escape') {
+                const open = document.querySelector('.app-window.open');
+                if (open) closeWindow(open.id);
+                else if (homeOpen) closeHome();
+            }
+        });
+
+        // ═══════════════════════════════════════════
+        //  FULLSCREEN
+        // ═══════════════════════════════════════════
+        function requestFullscreen() {
+            const el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        }
+        ['click', 'touchstart', 'keydown', 'mousedown'].forEach(evt => {
+            document.addEventListener(evt, function h() {
+                requestFullscreen();
+                ['click', 'touchstart', 'keydown', 'mousedown'].forEach(x => document.removeEventListener(x, h));
+            }, { once: true, passive: true });
+        });
+        setTimeout(requestFullscreen, 600);
+
+        // ═══════════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════════
+        function init() {
+            buildWallpaperSlots();
+            buildAppsGrid();
+
+            Calculator.init();
+            Notepad.init();
+            Browser.init();
+            FileManager.init();
+            KcnxPlayer.init();
+
+            const welcomeAlreadySeen = localStorage.getItem(WELCOME_KEY) === 'true';
+            if (!welcomeAlreadySeen) {
+                try { welcomeVideo.load(); } catch (e) {}
+            }
+
+            if (isBooted) {
+                showScreen('lock');
+                applyWallpaper(WALLPAPERS[currentWallpaperIndex], true);
+                startClock();
+                showLockOverlay();
+                initSwipe();
+                initHomeSwipe();
+            } else {
+                showScreen('bootManager');
+                bootInput.focus();
+            }
+        }
+        init();
+
+        window.addEventListener('beforeunload', () => {
+            if (statusTimer) clearTimeout(statusTimer);
+            if (clockInterval) clearInterval(clockInterval);
+            if (lockOverlayTimer) clearTimeout(lockOverlayTimer);
+            if (welcomeTimer) clearTimeout(welcomeTimer);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentScreen === 'lock') updateClockAndWeather();
+        });
+
+    })();
+</script>
+</body>
+</html>
